@@ -3,9 +3,7 @@ package com.app.android.kotlin.facecaptcha.data.source.remote.api
 import com.app.android.kotlin.facecaptcha.data.model.challenge.CaptchaResponse
 import com.app.android.kotlin.facecaptcha.data.model.challenge.ChallengeResponse
 import retrofit2.Call
-import retrofit2.http.GET
-import retrofit2.http.POST
-import retrofit2.http.Query
+import retrofit2.http.*
 
 interface ChallengeApi {
 
@@ -49,7 +47,7 @@ interface ChallengeApi {
      *
      */
     @POST("/icon/{id}")
-    fun icon(@Query("appkey") appkey: String, @Query("p") p: String): Call<ByteArray>
+    fun icon(@Path("id") id: String, @Query("appkey") appkey: String): Call<ByteArray>
 
     /**
      *
@@ -61,9 +59,9 @@ interface ChallengeApi {
      * @params:  'appkey' : chave de aplicação
      *           'chkey'  : chave do desafio
      *           'images' : Imagens capturadas, cada imagem capturada segue este formato:
-     *                          data:image/jpeg;base64,' + 'type:' + tipoFace.codigo + ',' + imgB64Data;
+     *                          'data:image/jpeg;base64,' + 'type:' + tipoFace.codigo + ',' + imgB64Data;
      *
      */
-    @GET("/facecaptcha/service/captcha/challenge")
-    fun captcha(@Query("appkey") appkey: String, @Query("p") p: String): Call<CaptchaResponse>
+    @POST("/facecaptcha/service/captcha")
+    fun captcha(@Field("appkey") appkey: String, @Field("chkey") chkey: String, @Field("images") images: List<String>): Call<CaptchaResponse>
 }
