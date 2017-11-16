@@ -1,4 +1,4 @@
-package com.app.android.kotlin.facecaptcha
+package com.app.android.kotlin.facecaptcha.feature.camera
 
 import android.content.Context
 import android.hardware.Camera

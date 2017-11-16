@@ -24,8 +24,18 @@ android {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation"org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
-    implementation 'com.android.support:appcompat-v7:26.1.0'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
+    implementation "com.android.support:appcompat-v7:${androidSupportVersion}"
+    implementation "com.android.support.constraint:constraint-layout:${constraintLayoutVersion}"
+
+    // Retrofit2 framework for http access interface
+    implementation "com.squareup.retrofit2:adapter-rxjava2:${retrofit2Version}"
+    implementation "com.squareup.retrofit2:retrofit:${retrofit2Version}"
+    implementation "com.squareup.retrofit2:converter-gson:${retrofit2Version}"
+    implementation "com.squareup.okhttp3:logging-interceptor:${okHttpVersion}"
+    implementation "com.squareup.okhttp3:okhttp:${okHttpVersion}"
+
+
     implementation 'com.android.support.constraint:constraint-layout:1.0.2'
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.1'

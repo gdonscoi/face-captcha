@@ -1,4 +1,4 @@
-package com.app.android.kotlin.facecaptcha
+package com.app.android.kotlin.facecaptcha.feature.camera
 
 import android.Manifest
 import android.content.Context
@@ -16,11 +16,12 @@ import android.view.View
 import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.Toast
+import com.app.android.kotlin.facecaptcha.R
 import java.io.FileNotFoundException
 import java.io.IOException
 
 
-class MainActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissionsResultCallback {
+class CameraActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissionsResultCallback {
 
     private var TAG = this.javaClass.name
 
@@ -41,7 +42,7 @@ class MainActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissionsRes
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        setContentView(R.layout.camera_activity)
 
         // Add a listener to the Capture button
         val captureButton = findViewById<View>(R.id.button_capture) as Button

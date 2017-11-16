@@ -6,6 +6,14 @@ buildscript {
         google()
         jcenter()
     }
+
+    ext {
+        androidSupportVersion = '26.1.0'
+        constraintLayoutVersion = '1.0.2'
+        okHttpVersion = '3.6.0'
+        retrofit2Version = '2.2.0'
+    }
+
     dependencies {
         classpath 'com.android.tools.build:gradle:3.0.0'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
