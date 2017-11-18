@@ -14,7 +14,6 @@ import java.io.IOException
 class CameraPreview : SurfaceView, SurfaceHolder.Callback {
 
     private var TAG = this.javaClass.name
-
     private var mHolder: SurfaceHolder
     private var mCamera: Camera
 

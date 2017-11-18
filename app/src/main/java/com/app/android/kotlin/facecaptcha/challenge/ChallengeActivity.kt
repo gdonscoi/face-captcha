@@ -175,7 +175,6 @@ class ChallengeActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissio
                 } catch (e: RuntimeException) {
                     printToast("Camera failed to open", e)
                 }
-
             }
         }
 
