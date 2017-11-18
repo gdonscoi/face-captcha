@@ -17,11 +17,13 @@ import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.Toast
 import com.app.android.kotlin.facecaptcha.R
+import com.app.android.kotlin.facecaptcha.data.source.remote.MockChallengeRemoteDataSource
+import kotlinx.android.synthetic.main.activity_challenge.*
 import java.io.FileNotFoundException
 import java.io.IOException
 
 
-class ChallengeActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissionsResultCallback {
+class ChallengeActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissionsResultCallback, CameraContract.View {
 
     private var TAG = this.javaClass.name
 
@@ -29,6 +31,10 @@ class ChallengeActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissio
     private var mPreview: CameraPreview? = null
 
     private var preview: FrameLayout? = null
+
+    private var presenter: CameraPresenter? = null
+
+    private var countPhotos = 0
 
     private val mPicture = PictureCallback { data, camera ->
         try {
@@ -46,13 +52,13 @@ class ChallengeActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissio
 
         // Add a listener to the Capture button
         val captureButton = findViewById<View>(R.id.button_capture) as Button
-        captureButton.setOnClickListener({ mCamera?.takePicture(null, null, mPicture)})
+        captureButton.setOnClickListener({ mCamera?.takePicture(null, null, mPicture) })
     }
 
     override fun onPause() {
         super.onPause()
         releaseCamera()
-
+        presenter?.destroy()
     }
 
     override fun onResume() {
@@ -67,6 +73,45 @@ class ChallengeActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissio
 
             preview = findViewById<View>(R.id.camera_preview) as FrameLayout
             preview?.addView(mPreview)
+        }
+        presenter = CameraPresenter(this, MockChallengeRemoteDataSource("appkey"))
+        presenter?.challenge("P")
+    }
+
+    override fun tookPicture() {
+        countPhotos++
+    }
+
+    override fun loadIcon(iconBinary: String) {
+        runOnUiThread {
+            iconField.text = iconBinary
+        }
+    }
+
+    override fun setMessage(message: String) {
+        runOnUiThread {
+            messageField.text = message
+        }
+    }
+
+    override fun setCounter(count: String) {
+        runOnUiThread {
+            counterField.text = count
+        }
+    }
+
+    override fun showView() {
+        runOnUiThread {
+            iconField.visibility = View.VISIBLE
+            messageField.visibility = View.VISIBLE
+            counterField.visibility = View.VISIBLE
+        }
+    }
+
+    override fun finishCaptcha(message: String) {
+        runOnUiThread {
+            val editedMessage = "Quantidade de fotos: $countPhotos - $message"
+            messageField.text = editedMessage
         }
     }
 
@@ -96,9 +141,8 @@ class ChallengeActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissio
     }
 
     /** Check if this device has a frontal camera  */
-    private fun checkFrontalCameraHardware(context: Context): Boolean {
-        return context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_FRONT)
-    }
+    private fun checkFrontalCameraHardware(context: Context): Boolean =
+            context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_FRONT)
 
     /**
      *
@@ -149,7 +193,6 @@ class ChallengeActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissio
             Log.d(TAG, text + ": " + e.message, e)
         }
     }
-
 
     @RequiresApi(Build.VERSION_CODES.M)
     private fun requestCameraPermission() {
