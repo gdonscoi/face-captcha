@@ -5,5 +5,6 @@ package com.app.android.kotlin.facecaptcha.data.model.challenge
  */
 class ChallengeDataResponse(val mensagem: String,
                             val grayscale: Boolean,
-                            val tempoEmSegundos: Integer,
-                            val tipoFace: TipoFaceResponse)
+                            val tempoEmSegundos: Int,
+                            val tipoFace: TipoFaceResponse,
+                            var icone: String? = "")
