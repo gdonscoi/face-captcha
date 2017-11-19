@@ -11,6 +11,7 @@ buildscript {
         android_support_version = '26.1.0'
         android_support_constraint_version = '1.0.2'
         retrofit2_version = '2.3.0'
+        bouncycastle_version = '1.45'
     }
 
     dependencies {
