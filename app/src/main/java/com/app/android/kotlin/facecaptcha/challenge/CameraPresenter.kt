@@ -1,12 +1,7 @@
 package com.app.android.kotlin.facecaptcha.challenge
 
 import android.hardware.Camera
-import android.os.Environment
-import android.util.Log
 import com.app.android.kotlin.facecaptcha.data.source.remote.MockChallengeRemoteDataSource
-import java.io.File
-import java.io.FileOutputStream
-import java.text.SimpleDateFormat
 import java.util.*
 
 
@@ -24,24 +19,12 @@ class CameraPresenter(contract: CameraContract.View?, source: MockChallengeRemot
         photos = ArrayList()
     }
 
-    var mPicture: Camera.PictureCallback? = null
-
     fun challenge(p: String) {
         Thread({
-            mPicture = Camera.PictureCallback { data, camera ->
-                photos?.add(data)
-                camera?.stopPreview()
-                camera?.startPreview()
-            }
-
             val challengeResponse = dataSource?.challenge(p, ChallengeCallback())
 
-            var totalTimeChallenges = 0L
-            challengeResponse?.challenges?.map { totalTimeChallenges += it.tempoEmSegundos }
-
-
             val manager = CameraManager(challengeResponse!!)
-            manager.start(totalTimeChallenges, ManagerCallback())
+            manager.start(ManagerCallback())
 
         }).start()
     }
@@ -49,7 +32,6 @@ class CameraPresenter(contract: CameraContract.View?, source: MockChallengeRemot
     fun destroy() {
         view = null
         photos = null
-        mPicture = null
     }
 
 
@@ -90,52 +72,19 @@ class CameraPresenter(contract: CameraContract.View?, source: MockChallengeRemot
             view?.loadIcon(icon)
         }
 
-        fun takePicture(countIteration: Int, delayFrameMillis: Long) {
-            Thread({
-                (1..countIteration).forEach {
-                    view?.tookPicture()
-                    Thread.sleep(delayFrameMillis)
-                }
-            }).start()
+        fun takePicture(pictureCallback: Camera.PictureCallback) {
+            view?.tookPicture(pictureCallback)
+        }
+
+        fun sendPhotos(photos: MutableCollection<ByteArray>) {
+            dataSource?.sendPhotos(photos)
         }
 
         fun onComplete() {
             view?.finishCaptcha("Processando, aguarde...")
             view?.loadIcon("")
             view?.setCounter("")
-            Log.i("challenge fotos size: ", photos?.size.toString())
-
-            saveFiles()
-        }
-
-        private fun saveFiles() {
-            val sdDir = Environment
-                    .getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
-            val pictureFileDir = File(sdDir, "FaceCaptcha")
-
-            if (!pictureFileDir.exists() && !pictureFileDir.mkdirs()) {
-                Log.d("Save file", "Muda na mão a permissão para salvar, teste soh para ver como fica as fotos")
-                return
-            }
-
-            photos?.forEach {
-                val dateFormat = SimpleDateFormat("yyyymmddhhmmssSSS", Locale.getDefault())
-                val date = dateFormat.format(Date())
-                val photoFile = "Picture_$date.jpg"
-
-                val filename = pictureFileDir.getPath() + File.separator + photoFile
-
-                val pictureFile = File(filename)
-
-                try {
-                    val fos = FileOutputStream(pictureFile)
-                    fos.write(it)
-                    fos.close()
-                } catch (error: Exception) {
-                    Log.d("Write", "File" + filename + "not saved: "
-                            + error.message)
-                }
-            }
+            dataSource?.captcha()
         }
 
     }

@@ -1,59 +1,58 @@
 package com.app.android.kotlin.facecaptcha.challenge
 
-import android.util.Log
+import android.hardware.Camera
 import com.app.android.kotlin.facecaptcha.data.model.challenge.ChallengeResponse
 import java.util.*
+import kotlin.collections.ArrayList
 
 
 class CameraManager(private val challengeResponse: ChallengeResponse) {
 
     private var count = 1
-    private val timer: Timer = Timer()
 
-    fun start(totalTimeChallenges: Long, callback: CameraPresenter.ManagerCallback) {
+    fun start(callback: CameraPresenter.ManagerCallback) {
         callback.onBeforeSend()
 
-        val delayTotalChallenges = (challengeResponse.totalTime - totalTimeChallenges) * 1000
-        var delayChallengeOverride: Long = 0
+        val timer = Timer()
+        timer.schedule(startCounting(callback), 0, 1000L)
 
         challengeResponse.challenges.forEach {
-            delayChallengeOverride += delayTotalChallenges
-            Log.i("delayChallengeOverride" , delayChallengeOverride.toString())
-            val delayChallenge = (it.tempoEmSegundos * 1000L)
+            val photos: MutableCollection<ByteArray> = ArrayList()
+            val pictureCallback = Camera.PictureCallback { data, camera ->
+                photos.add(data)
+                camera?.stopPreview()
+                camera?.startPreview()
+            }
 
-            timer.schedule(executeChallenges(delayChallenge, it.mensagem, it.icone ?: "", callback), delayChallengeOverride, delayChallenge)
+            val delayChallenge = (it.tempoEmSegundos * 1000L)
+            executeChallenges(delayChallenge, it.mensagem, it.icone ?: "", callback, pictureCallback)
+            callback.sendPhotos(photos)
         }
 
-        timer.schedule(startCounting(callback), 0, 1000L)
+        timer.cancel()
+        callback.onComplete()
     }
 
-    private fun executeChallenges(delayChallenge: Long, mensagem: String, icone: String, callback: CameraPresenter.ManagerCallback): TimerTask {
-        return object : TimerTask() {
-            override fun run() {
-                Log.i("executeChallenges" , mensagem)
+    private fun executeChallenges(delayChallenge: Long, message: String, icone: String, callback: CameraPresenter.ManagerCallback, pictureCallback: Camera.PictureCallback) {
+        callback.setMessage(message)
+        callback.loadIcon(icone)
 
-                callback.setMessage(mensagem)
-                callback.loadIcon(icone)
+        val delayFrameMillis = challengeResponse.snapFrequenceInMillis.toLong()
+        val countIteration = (delayChallenge / challengeResponse.snapFrequenceInMillis.toLong()).toInt()
 
-                val delayFrameMillis = challengeResponse.snapFrequenceInMillis.toLong()
-                val countIteration = (delayChallenge / challengeResponse.snapFrequenceInMillis.toLong()).toInt()
-
-                callback.takePicture(countIteration, delayFrameMillis)
-                cancel()
+        Thread({
+            (1..countIteration).forEach {
+                callback.takePicture(pictureCallback)
+                Thread.sleep(delayFrameMillis)
             }
-        }
+        }).start()
+
+        Thread.sleep(delayChallenge)
     }
 
     private fun startCounting(callback: CameraPresenter.ManagerCallback): TimerTask {
         return object : TimerTask() {
             override fun run() {
-                if (count > challengeResponse.totalTime) {
-                    callback.onComplete()
-                    timer.cancel()
-                    return
-                }
-
-                Log.i("startCounting" , count.toString())
                 callback.setCount(count.toString())
                 count++
             }

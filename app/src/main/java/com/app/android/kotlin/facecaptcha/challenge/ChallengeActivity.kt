@@ -61,8 +61,8 @@ class ChallengeActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissio
         presenter?.challenge("P")
     }
 
-    override fun tookPicture() {
-        mCamera?.takePicture(null, null, presenter?.mPicture)
+    override fun tookPicture(pictureCallback: Camera.PictureCallback) {
+        mCamera?.takePicture(null, null, pictureCallback)
     }
 
     override fun loadIcon(iconBinary: String) {
