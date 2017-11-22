@@ -29,7 +29,8 @@ dependencies {
     implementation "com.android.support.constraint:constraint-layout:$android_support_constraint_version"
 
     implementation "com.squareup.retrofit2:retrofit:$retrofit2_version"
-    implementation "com.squareup.retrofit2:converter-moshi:$retrofit2_version"
+//    implementation "com.squareup.retrofit2:converter-moshi:$retrofit2_version"
+    implementation "com.squareup.retrofit2:converter-gson:$retrofit2_version"
 
     // criptografia
     implementation "org.bouncycastle:bcprov-jdk16:$bouncycastle_version"

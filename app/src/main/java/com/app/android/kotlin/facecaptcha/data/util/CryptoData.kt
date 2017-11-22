@@ -1,7 +1,5 @@
 package com.app.android.kotlin.facecaptcha.data.util
 
-import android.os.Build
-import android.support.annotation.RequiresApi
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.util.encoders.Base64
 import java.security.Security
@@ -33,7 +31,6 @@ class CryptoData(appKey: String) {
     private val ivSpec: IvParameterSpec = IvParameterSpec(iv.toByteArray())
 
 
-    @Throws(Exception::class)
     fun encrypt(data: String): String {
         cipher.init(Cipher.ENCRYPT_MODE, skeySpec, ivSpec)
 
@@ -42,7 +39,6 @@ class CryptoData(appKey: String) {
         return String(Base64.encode(enc))
     }
 
-    @Throws(Exception::class)
     fun decrypt(data: String): String {
         cipher.init(Cipher.DECRYPT_MODE, skeySpec, ivSpec)
 
