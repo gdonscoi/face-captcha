@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.hardware.Camera
-import android.hardware.Camera.PictureCallback
 import android.os.Build
 import android.os.Bundle
 import android.support.annotation.RequiresApi
@@ -13,14 +12,11 @@ import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.View
-import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.Toast
 import com.app.android.kotlin.facecaptcha.R
 import com.app.android.kotlin.facecaptcha.data.source.remote.MockChallengeRemoteDataSource
 import kotlinx.android.synthetic.main.activity_challenge.*
-import java.io.FileNotFoundException
-import java.io.IOException
 
 
 class ChallengeActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissionsResultCallback, CameraContract.View {
@@ -34,25 +30,11 @@ class ChallengeActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissio
 
     private var presenter: CameraPresenter? = null
 
-    private var countPhotos = 0
-
-    private val mPicture = PictureCallback { data, camera ->
-        try {
-            printToast("Frame captured with success")
-        } catch (e: FileNotFoundException) {
-            printToast("File not found.", e)
-        } catch (e: IOException) {
-            printToast("Error accessing file.", e)
-        }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_challenge)
 
-        // Add a listener to the Capture button
-        val captureButton = findViewById<View>(R.id.button_capture) as Button
-        captureButton.setOnClickListener({ mCamera?.takePicture(null, null, mPicture) })
     }
 
     override fun onPause() {
@@ -74,12 +56,13 @@ class ChallengeActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissio
             preview = findViewById<View>(R.id.camera_preview) as FrameLayout
             preview?.addView(mPreview)
         }
+
         presenter = CameraPresenter(this, MockChallengeRemoteDataSource("appkey"))
         presenter?.challenge("P")
     }
 
-    override fun tookPicture() {
-        countPhotos++
+    override fun tookPicture(pictureCallback: Camera.PictureCallback) {
+        mCamera?.takePicture(null, null, pictureCallback)
     }
 
     override fun loadIcon(iconBinary: String) {
@@ -110,8 +93,7 @@ class ChallengeActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissio
 
     override fun finishCaptcha(message: String) {
         runOnUiThread {
-            val editedMessage = "Quantidade de fotos: $countPhotos - $message"
-            messageField.text = editedMessage
+            messageField.text = message
         }
     }
 
