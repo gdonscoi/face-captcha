@@ -20,12 +20,12 @@ class CameraManager(private val challengeResponse: ChallengeResponse) {
             val photos: MutableCollection<ByteArray> = ArrayList()
             val pictureCallback = Camera.PictureCallback { data, camera ->
                 photos.add(data)
-                camera?.stopPreview()
-                camera?.startPreview()
+//                camera?.stopPreview()
+//                camera?.startPreview()
             }
 
             val delayChallenge = (it.tempoEmSegundos * 1000L)
-            executeChallenges(delayChallenge, it.mensagem, it.icone ?: "", callback, pictureCallback)
+            executeChallenges(delayChallenge, it.mensagem, it.tipoFace.imagem, callback, pictureCallback)
             callback.sendPhotos(photos)
         }
 
@@ -34,7 +34,7 @@ class CameraManager(private val challengeResponse: ChallengeResponse) {
     }
 
     private fun executeChallenges(delayChallenge: Long, message: String, icone: String, callback: CameraPresenter.ManagerCallback, pictureCallback: Camera.PictureCallback) {
-        callback.setMessage(message)
+        callback.loadMessage(message)
         callback.loadIcon(icone)
 
         val delayFrameMillis = challengeResponse.snapFrequenceInMillis.toLong()

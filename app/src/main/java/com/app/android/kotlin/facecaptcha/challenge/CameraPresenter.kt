@@ -1,32 +1,33 @@
 package com.app.android.kotlin.facecaptcha.challenge
 
 import android.hardware.Camera
-import com.app.android.kotlin.facecaptcha.data.source.remote.MockChallengeRemoteDataSource
+import com.app.android.kotlin.facecaptcha.data.source.ChallengeRepository
 import java.util.*
 
 
-class CameraPresenter(contract: CameraContract.View?, source: MockChallengeRemoteDataSource) {
+class CameraPresenter(contract: CameraContract.View?) {
 
     companion object {
         private var view: CameraContract.View? = null
-        private var dataSource: MockChallengeRemoteDataSource? = null
         private var photos: MutableCollection<ByteArray>? = null
+
+        // Mock
+        private val BASE_URL = "https://comercial.certiface.com.br:8443"
+        private val APP_KEY = "oKIZ1jjpRyXCDDNiR--_OPNGiNmraDZIuGE1rlUyZwOGJJzDtJR7BahJ4MqnobwetlmjXFsYFeze0eBRAGS2KWmjFUp08HYsv6pyI3KZklISJVmKJDSgfmkRmPaBR9ZJP3wtVWFDwNR9kS_vecameg"
     }
+
+    private val repository = ChallengeRepository(BASE_URL, APP_KEY)
 
     init {
         view = contract
-        dataSource = source
         photos = ArrayList()
     }
 
-    fun challenge(p: String) {
-        Thread({
-            val challengeResponse = dataSource?.challenge(p, ChallengeCallback())
-
+    fun challenge(params: String) {
+        repository.challenge(params, { challengeResponse ->
             val manager = CameraManager(challengeResponse!!)
             manager.start(ManagerCallback())
-
-        }).start()
+        })
     }
 
     fun destroy() {
@@ -34,27 +35,8 @@ class CameraPresenter(contract: CameraContract.View?, source: MockChallengeRemot
         photos = null
     }
 
-
-    class ChallengeCallback {
-        fun onBeforeSend() {
-            view?.setMessage("Obtendo dados do server")
-            view?.loadIcon("")
-            view?.showView()
-        }
-
-        fun onError(error: String) {
-            view?.setMessage(error)
-        }
-
-        fun onComplete() {
-
-        }
-    }
-
     class ManagerCallback {
         fun onBeforeSend() {
-            view?.setMessage("Olhe para a camera")
-            view?.loadIcon("")
         }
 
         fun onError(error: String) {
@@ -64,7 +46,7 @@ class CameraPresenter(contract: CameraContract.View?, source: MockChallengeRemot
             view?.setCounter(count)
         }
 
-        fun setMessage(mensagem: String) {
+        fun loadMessage(mensagem: String) {
             view?.setMessage(mensagem)
         }
 
@@ -77,14 +59,14 @@ class CameraPresenter(contract: CameraContract.View?, source: MockChallengeRemot
         }
 
         fun sendPhotos(photos: MutableCollection<ByteArray>) {
-            dataSource?.sendPhotos(photos)
+//            dataSource?.sendPhotos(photos)
         }
 
         fun onComplete() {
             view?.finishCaptcha("Processando, aguarde...")
             view?.loadIcon("")
             view?.setCounter("")
-            dataSource?.captcha()
+//            dataSource?.captcha()
         }
 
     }
