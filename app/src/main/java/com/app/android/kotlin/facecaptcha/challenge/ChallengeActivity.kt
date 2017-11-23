@@ -3,6 +3,7 @@ package com.app.android.kotlin.facecaptcha.challenge
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import android.graphics.BitmapFactory
 import android.hardware.Camera
 import android.os.Build
 import android.os.Bundle
@@ -10,12 +11,13 @@ import android.support.annotation.RequiresApi
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
+import android.util.Base64
 import android.util.Log
 import android.view.View
 import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.Toast
 import com.app.android.kotlin.facecaptcha.R
-import com.app.android.kotlin.facecaptcha.data.source.remote.MockChallengeRemoteDataSource
 import kotlinx.android.synthetic.main.activity_challenge.*
 
 
@@ -28,7 +30,7 @@ class ChallengeActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissio
 
     private var preview: FrameLayout? = null
 
-    private var presenter: CameraPresenter? = null
+    private lateinit var presenter: CameraPresenter
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -40,11 +42,13 @@ class ChallengeActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissio
     override fun onPause() {
         super.onPause()
         releaseCamera()
-        presenter?.destroy()
+        presenter.destroy()
     }
 
     override fun onResume() {
         super.onResume()
+
+        presenter = CameraPresenter(this@ChallengeActivity)
 
         if (checkCameraRequirements()) {
             // Create an instance of Camera
@@ -57,23 +61,34 @@ class ChallengeActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissio
             preview?.addView(mPreview)
         }
 
-        presenter = CameraPresenter(this, MockChallengeRemoteDataSource("appkey"))
-        presenter?.challenge("P")
+        presenter.challenge(MOCK_PARAMS)
     }
 
     override fun tookPicture(pictureCallback: Camera.PictureCallback) {
         mCamera?.takePicture(null, null, pictureCallback)
     }
 
-    override fun loadIcon(iconBinary: String) {
+    override fun loadIcon(base64Image: String) {
+        if (base64Image == null || base64Image.isEmpty()) {
+            return
+        }
+        val decodedString = Base64.decode(base64Image, Base64.DEFAULT)
+        val decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.size)
+
         runOnUiThread {
-            iconField.text = iconBinary
+            (iconField as ImageView).setImageBitmap(decodedByte)
         }
     }
 
-    override fun setMessage(message: String) {
+    override fun setMessage(base64message: String) {
+        if (base64message == null || base64message.isEmpty()) {
+            return
+        }
+        val decodedString = Base64.decode(base64message, Base64.DEFAULT)
+        val decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.size)
+
         runOnUiThread {
-            messageField.text = message
+            (messageField as ImageView).setImageBitmap(decodedByte)
         }
     }
 
@@ -93,7 +108,7 @@ class ChallengeActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissio
 
     override fun finishCaptcha(message: String) {
         runOnUiThread {
-            messageField.text = message
+//            messageField.text = message
         }
     }
 
@@ -195,5 +210,8 @@ class ChallengeActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissio
     companion object {
 
         val REQUEST_CAMERA_PERMISSION = 1
+
+        // Mock
+        val MOCK_PARAMS = "user,comercial.token,cpf,8136822824,nome,ALESSANDRO DE OLIVEIRA FARIA,nascimento,27/05/1972"
     }
 }
