@@ -1,5 +1,7 @@
 package com.app.android.kotlin.facecaptcha.data.source.remote
 
+import android.graphics.BitmapFactory
+import android.util.Base64
 import com.app.android.kotlin.facecaptcha.data.model.challenge.CaptchaResponse
 import com.app.android.kotlin.facecaptcha.data.model.challenge.ChallengeResponse
 import com.app.android.kotlin.facecaptcha.data.source.remote.api.ChallengeApi
@@ -30,7 +32,17 @@ class ChallengeRemoteDataSource(baseUrl: String, private val appKey: String) {
         val encrypted = response.body()
         val json = cryptoData.decrypt(encrypted!!)
 
-        return gson.fromJson(json, ChallengeResponse::class.java)
+        val challengeResponse = gson.fromJson(json, ChallengeResponse::class.java)
+
+        challengeResponse.challenges.map {
+            val decodedMessage = Base64.decode(it.mensagem, Base64.DEFAULT)
+            it.decodedMessage = BitmapFactory.decodeByteArray(decodedMessage, 0, decodedMessage.size)
+
+            val decodedIcon = Base64.decode(it.tipoFace.imagem, Base64.DEFAULT)
+            it.decodedIcon = BitmapFactory.decodeByteArray(decodedIcon, 0, decodedIcon.size)
+        }
+
+        return challengeResponse
     }
 
     fun captcha(chkey: String, images: List<String>): CaptchaResponse {

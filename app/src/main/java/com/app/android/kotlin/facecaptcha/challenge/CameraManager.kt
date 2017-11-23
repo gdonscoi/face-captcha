@@ -1,5 +1,6 @@
 package com.app.android.kotlin.facecaptcha.challenge
 
+import android.graphics.Bitmap
 import android.hardware.Camera
 import com.app.android.kotlin.facecaptcha.data.model.challenge.ChallengeResponse
 import java.util.*
@@ -25,7 +26,7 @@ class CameraManager(private val challengeResponse: ChallengeResponse) {
             }
 
             val delayChallenge = (it.tempoEmSegundos * 1000L)
-            executeChallenges(delayChallenge, it.mensagem, it.tipoFace.imagem, callback, pictureCallback)
+            executeChallenges(delayChallenge, it.decodedMessage, it.decodedIcon, callback, pictureCallback)
             callback.sendPhotos(photos)
         }
 
@@ -33,9 +34,9 @@ class CameraManager(private val challengeResponse: ChallengeResponse) {
         callback.onComplete()
     }
 
-    private fun executeChallenges(delayChallenge: Long, message: String, icone: String, callback: CameraPresenter.ManagerCallback, pictureCallback: Camera.PictureCallback) {
+    private fun executeChallenges(delayChallenge: Long, message: Bitmap?, icon: Bitmap?, callback: CameraPresenter.ManagerCallback, pictureCallback: Camera.PictureCallback) {
         callback.loadMessage(message)
-        callback.loadIcon(icone)
+        callback.loadIcon(icon)
 
         val delayFrameMillis = challengeResponse.snapFrequenceInMillis.toLong()
         val countIteration = (delayChallenge / challengeResponse.snapFrequenceInMillis.toLong()).toInt()
