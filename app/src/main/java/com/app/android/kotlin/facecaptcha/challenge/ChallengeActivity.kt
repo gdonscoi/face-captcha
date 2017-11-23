@@ -61,10 +61,10 @@ class ChallengeActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissio
             preview?.addView(mPreview)
         }
 
-        presenter.challenge(MOCK_PARAMS)
+        presenter.start(MOCK_PARAMS)
     }
 
-    override fun tookPicture(pictureCallback: Camera.PictureCallback) {
+    override fun takePicture(pictureCallback: Camera.PictureCallback) {
         mCamera?.takePicture(null, null, pictureCallback)
     }
 

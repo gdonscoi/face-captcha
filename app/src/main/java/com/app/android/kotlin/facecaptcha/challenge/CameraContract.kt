@@ -5,7 +5,7 @@ import android.hardware.Camera
 interface CameraContract {
     interface View {
 
-        fun tookPicture(pictureCallback: Camera.PictureCallback)
+        fun takePicture(pictureCallback: Camera.PictureCallback)
 
         fun loadIcon(iconBinary: String)
 
