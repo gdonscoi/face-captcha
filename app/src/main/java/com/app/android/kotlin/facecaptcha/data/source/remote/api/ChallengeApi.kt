@@ -1,7 +1,6 @@
 package com.app.android.kotlin.facecaptcha.data.source.remote.api
 
 import com.app.android.kotlin.facecaptcha.data.model.challenge.CaptchaResponse
-import com.app.android.kotlin.facecaptcha.data.model.challenge.ChallengeResponse
 import retrofit2.Call
 import retrofit2.http.*
 
