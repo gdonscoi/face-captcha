@@ -57,8 +57,9 @@ class CameraPresenter(private val view: CameraContract.View) {
         val numberOfPictures = challengeDurationInMillis / snapFrequenceInMillis
 
         val photos = ArrayList<ByteArray>()
-        val takePictureCallback = Camera.PictureCallback { data, _ ->
+        val takePictureCallback = Camera.PictureCallback { data, camera ->
             photos.add(data)
+            camera.startPreview()
 
             // envia fotos ao finalizar o desafio
             if (numberOfPictures == photos.size) {
