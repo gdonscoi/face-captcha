@@ -8,7 +8,7 @@
         android:id="@+id/camera_preview"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@id/containerFeedback" >
+        android:layout_above="@id/containerFeedback">
 
     </FrameLayout>
 
@@ -20,12 +20,12 @@
         android:layout_alignParentLeft="true">
 
         <LinearLayout
+            android:id="@+id/linearLayout"
             android:layout_width="match_parent"
             android:layout_height="100dp"
-            android:orientation="horizontal"
-            android:id="@+id/linearLayout">
+            android:orientation="horizontal">
 
-        <!--<TextView-->
+            <!--<TextView-->
             <!--android:id="@+id/iconField"-->
             <!--android:layout_width="100dp"-->
             <!--android:layout_height="wrap_content"-->
@@ -42,24 +42,21 @@
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight=".30"
-                android:text="99"
+                android:gravity="center_vertical"
                 android:textAlignment="center"
-                android:textAppearance="@style/TextAppearance.AppCompat.Large"
-                android:visibility="gone" />
+                android:textAppearance="@style/TextAppearance.AppCompat.Large" />
 
             <ImageView
                 android:id="@+id/iconField"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_weight=".30"
-                android:src="@drawable/ic_launcher_background"/>
+                android:layout_weight=".30" />
 
             <ImageView
                 android:id="@+id/messageField"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_weight=".70"
-                android:src="@drawable/ic_launcher_background" />
+                android:layout_weight=".70" />
 
         </LinearLayout>
 

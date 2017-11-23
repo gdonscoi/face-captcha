@@ -1,5 +1,6 @@
 package com.app.android.kotlin.facecaptcha.challenge
 
+import android.graphics.Bitmap
 import android.hardware.Camera
 import android.os.Handler
 import android.os.SystemClock
@@ -22,16 +23,12 @@ class CameraPresenter(private val view: CameraContract.View) {
         handler.removeCallbacksAndMessages(null)
     }
 
-    private fun getDate(delay: Long = 0): Long = SystemClock.uptimeMillis() + delay
-
     private fun startChallenges(apiResponse: ChallengeResponse) {
-
         val totalChallengesDurationInSeconds = apiResponse.totalTime
         val snapFrequenceInMillis = apiResponse.snapFrequenceInMillis
         var startChallengeAtInMillis = 0L
 
-
-        view.setCounter(totalChallengesDurationInSeconds.toString())
+        setupCounter(totalChallengesDurationInSeconds)
 
         apiResponse.challenges.forEach { challenge ->
             val challengeDurationInMillis = challenge.tempoEmSegundos * 1000
@@ -41,7 +38,18 @@ class CameraPresenter(private val view: CameraContract.View) {
             // IMPORTANTE: Não podemos deixar de incremetar o tempo de cada desafio no final
             startChallengeAtInMillis += challengeDurationInMillis
         }
+    }
 
+    private fun setupCounter(durationInSeconds: Int) {
+
+        view.setCounter(durationInSeconds.toString())
+
+        (0..(durationInSeconds-1)).reversed().forEachIndexed { index, it ->
+            val delay = (index + 1) * 1000L
+            handler.postAtTime({
+                view.setCounter(it.toString())
+            }, getPostAtTime(delay))
+        }
     }
 
     private fun scheduleChallenge(challenge: ChallengeDataResponse, startAt: Long, snapFrequenceInMillis: Int) {
@@ -59,25 +67,27 @@ class CameraPresenter(private val view: CameraContract.View) {
         }
 
         // Agenda para alterar icone e imagem do desafio
-        handler.postAtTime({ loadChallenge(challenge) }, getDate(startAt))
+        handler.postAtTime({ loadChallenge(challenge) }, getPostAtTime(startAt))
 
         // Agenda para capturar imagens do desafio
         (1..numberOfPictures).forEach {
             val delay = startAt + (snapFrequenceInMillis * it)
-            handler.postAtTime({ takePicture(takePictureCallback) }, getDate(delay))
+            handler.postAtTime({ takePicture(takePictureCallback) }, getPostAtTime(delay))
         }
     }
 
+    private fun getPostAtTime(delay: Long): Long = SystemClock.uptimeMillis() + delay
+
     private fun loadChallenge(challenge: ChallengeDataResponse) {
-        loadMessage(challenge.mensagem)
-        loadIcon(challenge.tipoFace.imagem)
+        loadMessage(challenge.decodedMessage)
+        loadIcon(challenge.decodedIcon)
     }
 
-    private fun loadMessage(mensagem: String) {
-        view.setMessage(mensagem)
+    private fun loadMessage(message: Bitmap?) {
+        view.setMessage(message)
     }
 
-    private fun loadIcon(icon: String) {
+    private fun loadIcon(icon: Bitmap?) {
         view.loadIcon(icon)
     }
 

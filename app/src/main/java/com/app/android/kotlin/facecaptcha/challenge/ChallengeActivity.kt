@@ -3,7 +3,7 @@ package com.app.android.kotlin.facecaptcha.challenge
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
-import android.graphics.BitmapFactory
+import android.graphics.Bitmap
 import android.hardware.Camera
 import android.os.Build
 import android.os.Bundle
@@ -11,11 +11,9 @@ import android.support.annotation.RequiresApi
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
-import android.util.Base64
 import android.util.Log
 import android.view.View
 import android.widget.FrameLayout
-import android.widget.ImageView
 import android.widget.Toast
 import com.app.android.kotlin.facecaptcha.R
 import kotlinx.android.synthetic.main.activity_challenge.*
@@ -68,27 +66,15 @@ class ChallengeActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissio
         mCamera?.takePicture(null, null, pictureCallback)
     }
 
-    override fun loadIcon(base64Image: String) {
-        if (base64Image == null || base64Image.isEmpty()) {
-            return
-        }
-        val decodedString = Base64.decode(base64Image, Base64.DEFAULT)
-        val decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.size)
-
+    override fun loadIcon(icon: Bitmap?) {
         runOnUiThread {
-            (iconField as ImageView).setImageBitmap(decodedByte)
+            iconField.setImageBitmap(icon)
         }
     }
 
-    override fun setMessage(base64message: String) {
-        if (base64message == null || base64message.isEmpty()) {
-            return
-        }
-        val decodedString = Base64.decode(base64message, Base64.DEFAULT)
-        val decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.size)
-
+    override fun setMessage(message: Bitmap?) {
         runOnUiThread {
-            (messageField as ImageView).setImageBitmap(decodedByte)
+            messageField.setImageBitmap(message)
         }
     }
 
@@ -99,17 +85,9 @@ class ChallengeActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissio
     }
 
     override fun showView() {
-        runOnUiThread {
-            iconField.visibility = View.VISIBLE
-            messageField.visibility = View.VISIBLE
-            counterField.visibility = View.VISIBLE
-        }
     }
 
     override fun finishCaptcha(message: String) {
-        runOnUiThread {
-//            messageField.text = message
-        }
     }
 
     private fun releaseCamera() {
