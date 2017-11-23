@@ -59,32 +59,20 @@ class ChallengeActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissio
             preview?.addView(mPreview)
         }
 
-        presenter.challenge(MOCK_PARAMS)
+        presenter.start(MOCK_PARAMS)
     }
 
-    override fun tookPicture(pictureCallback: Camera.PictureCallback) {
+    override fun takePicture(pictureCallback: Camera.PictureCallback) {
         mCamera?.takePicture(null, null, pictureCallback)
     }
 
     override fun loadIcon(icon: Bitmap?) {
-//        if (base64Image == null || base64Image.isEmpty()) {
-//            return
-//        }
-//        val decodedString = Base64.decode(base64Image, Base64.DEFAULT)
-//        val decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.size)
-
         runOnUiThread {
             iconField.setImageBitmap(icon)
         }
     }
 
     override fun setMessage(message: Bitmap?) {
-//        if (base64message == null || base64message.isEmpty()) {
-//            return
-//        }
-//        val decodedString = Base64.decode(base64message, Base64.DEFAULT)
-//        val decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.size)
-
         runOnUiThread {
             messageField.setImageBitmap(message)
         }
@@ -97,17 +85,9 @@ class ChallengeActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissio
     }
 
     override fun showView() {
-        runOnUiThread {
-//            iconField.visibility = View.VISIBLE
-//            messageField.visibility = View.VISIBLE
-//            counterField.visibility = View.VISIBLE
-        }
     }
 
     override fun finishCaptcha(message: String) {
-        runOnUiThread {
-            //            messageField.text = message
-        }
     }
 
     private fun releaseCamera() {

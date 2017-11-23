@@ -50,15 +50,13 @@
                 android:id="@+id/iconField"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_weight=".30"
-                android:src="@drawable/ic_launcher_background" />
+                android:layout_weight=".30" />
 
             <ImageView
                 android:id="@+id/messageField"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_weight=".70"
-                android:src="@drawable/ic_launcher_background" />
+                android:layout_weight=".70" />
 
         </LinearLayout>
 
