@@ -1,5 +1,6 @@
 package com.app.android.kotlin.facecaptcha.challenge
 
+import android.graphics.Bitmap
 import android.hardware.Camera
 import com.app.android.kotlin.facecaptcha.data.source.ChallengeRepository
 import java.util.*
@@ -46,11 +47,11 @@ class CameraPresenter(contract: CameraContract.View?) {
             view?.setCounter(count)
         }
 
-        fun loadMessage(mensagem: String) {
-            view?.setMessage(mensagem)
+        fun loadMessage(message: Bitmap?) {
+            view?.setMessage(message)
         }
 
-        fun loadIcon(icon: String) {
+        fun loadIcon(icon: Bitmap?) {
             view?.loadIcon(icon)
         }
 
@@ -64,8 +65,6 @@ class CameraPresenter(contract: CameraContract.View?) {
 
         fun onComplete() {
             view?.finishCaptcha("Processando, aguarde...")
-            view?.loadIcon("")
-            view?.setCounter("")
 //            dataSource?.captcha()
         }
 
