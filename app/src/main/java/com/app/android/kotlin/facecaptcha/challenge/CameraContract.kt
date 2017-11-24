@@ -16,6 +16,6 @@ interface CameraContract {
 
         fun showView()
 
-        fun finishCaptcha(message: String)
+        fun finishChallenge(valid: Boolean)
     }
 }

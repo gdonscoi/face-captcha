@@ -1,43 +1,86 @@
 package com.app.android.kotlin.facecaptcha.challenge
 
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.hardware.Camera
 import android.os.Handler
+import android.os.HandlerThread
 import android.os.SystemClock
+import android.util.Log
 import com.app.android.kotlin.facecaptcha.data.model.challenge.ChallengeDataResponse
 import com.app.android.kotlin.facecaptcha.data.model.challenge.ChallengeResponse
 import com.app.android.kotlin.facecaptcha.data.source.ChallengeRepository
+import java.io.ByteArrayOutputStream
 import java.util.*
+import kotlin.collections.HashMap
 
 
 class CameraPresenter(private val view: CameraContract.View) {
 
-    private val handler = Handler()
+    private val handlerThread = HandlerThread(this::javaClass.name)
+    private var handler: Handler
+
     private val repository = ChallengeRepository(BASE_URL, APP_KEY)
+
+    private val photos = HashMap<ByteArray, String>()
+
+
+    init {
+        handlerThread.start()
+        handler = Handler(handlerThread.looper)
+    }
 
     fun start(params: String) {
         repository.challenge(params, { challengeResponse -> startChallenges(challengeResponse) })
     }
 
     fun destroy() {
+        repository.destroy()
+
         handler.removeCallbacksAndMessages(null)
+        photos.clear()
     }
 
     private fun startChallenges(apiResponse: ChallengeResponse) {
+        val chKey = apiResponse.chkey
         val totalChallengesDurationInSeconds = apiResponse.totalTime
         val snapFrequenceInMillis = apiResponse.snapFrequenceInMillis
         var startChallengeAtInMillis = 0L
+
+        val totalChallengePictures = countTotalChallengePictures(apiResponse)
 
         setupCounter(totalChallengesDurationInSeconds)
 
         apiResponse.challenges.forEach { challenge ->
             val challengeDurationInMillis = challenge.tempoEmSegundos * 1000
 
-            scheduleChallenge(challenge, startChallengeAtInMillis, snapFrequenceInMillis)
+            scheduleChallenge(
+                    challenge,
+                    startChallengeAtInMillis,
+                    snapFrequenceInMillis,
+                    {
+                        if (totalChallengePictures == photos.size) {
+                            sendChallenge(chKey, photos)
+                        }
+                    })
 
             // IMPORTANTE: Não podemos deixar de incremetar o tempo de cada desafio no final
             startChallengeAtInMillis += challengeDurationInMillis
         }
+    }
+
+    private fun countTotalChallengePictures(apiResponse: ChallengeResponse): Int {
+        val snapFrequenceInMillis = apiResponse.snapFrequenceInMillis
+        var totalOfPictures = 0
+
+        apiResponse.challenges.forEach { challenge ->
+            val challengeDurationInMillis = challenge.tempoEmSegundos * 1000
+            val numberOfPictures = challengeDurationInMillis / snapFrequenceInMillis
+
+            totalOfPictures += numberOfPictures
+        }
+
+        return totalOfPictures
     }
 
     private fun setupCounter(durationInSeconds: Int) {
@@ -52,19 +95,17 @@ class CameraPresenter(private val view: CameraContract.View) {
         }
     }
 
-    private fun scheduleChallenge(challenge: ChallengeDataResponse, startAt: Long, snapFrequenceInMillis: Int) {
+    private fun scheduleChallenge(challenge: ChallengeDataResponse, startAt: Long, snapFrequenceInMillis: Int, afterTakePicture: () -> Unit) {
         val challengeDurationInMillis = challenge.tempoEmSegundos * 1000
         val numberOfPictures = challengeDurationInMillis / snapFrequenceInMillis
+        val tipoFaceCodigo = challenge.tipoFace.codigo
 
-        val photos = ArrayList<ByteArray>()
-        val takePictureCallback = Camera.PictureCallback { data, camera ->
-            photos.add(data)
+        val callback = Camera.PictureCallback { data, camera ->
+            handler.post({
+                photos.put(reduceImage(data), tipoFaceCodigo)
+                afterTakePicture()
+            })
             camera.startPreview()
-
-            // envia fotos ao finalizar o desafio
-            if (numberOfPictures == photos.size) {
-                sendPhotos(photos)
-            }
         }
 
         // Agenda para alterar icone e imagem do desafio
@@ -73,7 +114,7 @@ class CameraPresenter(private val view: CameraContract.View) {
         // Agenda para capturar imagens do desafio
         (1..numberOfPictures).forEach {
             val delay = startAt + (snapFrequenceInMillis * it)
-            handler.postAtTime({ takePicture(takePictureCallback) }, getPostAtTime(delay))
+            handler.postAtTime({ takePicture(callback) }, getPostAtTime(delay))
         }
     }
 
@@ -96,8 +137,26 @@ class CameraPresenter(private val view: CameraContract.View) {
         view.takePicture(pictureCallback)
     }
 
-    private fun sendPhotos(photos: MutableCollection<ByteArray>) {
-//        dataSource?.sendPhotos(photos)
+    private fun sendChallenge(chKey: String, images: Map<ByteArray, String>) {
+        Log.d(this::class.java.name, "Starting send captcha at " + Date())
+        repository.captcha(chKey, images, { captchaResponse ->
+            Log.d(this::class.java.name, "Finish send captcha at " + Date() + ". Valid: " + captchaResponse.valid)
+            view.finishChallenge(captchaResponse.valid)
+        })
+    }
+
+    private fun reduceImage(byteImage: ByteArray): ByteArray {
+        val options = BitmapFactory.Options()
+        options.inPreferredConfig = Bitmap.Config.ALPHA_8
+        options.inTargetDensity = 72
+        options.inDensity = 72
+
+        val image = BitmapFactory.decodeByteArray(byteImage, 0, byteImage.size, options)
+        val bos = ByteArrayOutputStream()
+
+        image.compress(Bitmap.CompressFormat.JPEG, 100, bos)
+
+        return bos.toByteArray()
     }
 
 

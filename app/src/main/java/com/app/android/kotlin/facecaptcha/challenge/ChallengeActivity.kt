@@ -1,9 +1,12 @@
 package com.app.android.kotlin.facecaptcha.challenge
 
 import android.Manifest
+import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.graphics.ImageFormat
 import android.hardware.Camera
 import android.os.Build
 import android.os.Bundle
@@ -12,6 +15,7 @@ import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
+import android.view.Surface
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.Toast
@@ -62,8 +66,8 @@ class ChallengeActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissio
         presenter.start(MOCK_PARAMS)
     }
 
-    override fun takePicture(pictureCallback: Camera.PictureCallback) {
-        mCamera?.takePicture(null, null, pictureCallback)
+    override fun takePicture(callback: Camera.PictureCallback) {
+        mCamera?.takePicture(null, null, callback)
     }
 
     override fun loadIcon(icon: Bitmap?) {
@@ -87,7 +91,13 @@ class ChallengeActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissio
     override fun showView() {
     }
 
-    override fun finishCaptcha(message: String) {
+    override fun finishChallenge(valid: Boolean) {
+        val data = Intent()
+
+        data.putExtra("result", valid)
+        setResult(RESULT_OK, data)
+
+        finish()
     }
 
     private fun releaseCamera() {
@@ -146,7 +156,9 @@ class ChallengeActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissio
             if (cameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
                 try {
                     cam = Camera.open(camIdx)
-                    cam.setDisplayOrientation(90)
+
+                    setCameraDisplayOrientation(this@ChallengeActivity, cameraInfo, cam)
+                    setCameraParameters(cam!!)
                 } catch (e: RuntimeException) {
                     printToast("Camera failed to open", e)
                 }
@@ -154,6 +166,42 @@ class ChallengeActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissio
         }
 
         return cam
+    }
+
+    private fun setCameraParameters(camera: Camera) {
+        val parameters = camera.parameters
+        val lowerSupportedPictureSize = parameters.supportedPictureSizes.last()
+
+        parameters.pictureFormat = ImageFormat.JPEG
+        parameters.setPictureSize(lowerSupportedPictureSize.width, lowerSupportedPictureSize.height)
+
+        camera.parameters = parameters
+    }
+
+    /**
+     * @see Camera.setDisplayOrientation() comments
+     */
+    private fun setCameraDisplayOrientation(activity: Activity, info: Camera.CameraInfo, camera: android.hardware.Camera) {
+
+        val rotation = activity.windowManager.defaultDisplay.rotation
+
+        var degrees = 0
+
+        when (rotation) {
+            Surface.ROTATION_0 -> degrees = 0
+            Surface.ROTATION_90 -> degrees = 90
+            Surface.ROTATION_180 -> degrees = 180
+            Surface.ROTATION_270 -> degrees = 270
+        }
+
+        var result: Int
+        if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+            result = (info.orientation + degrees) % 360
+            result = (360 - result) % 360  // compensate the mirror
+        } else {  // back-facing
+            result = (info.orientation - degrees + 360) % 360
+        }
+        camera.setDisplayOrientation(result)
     }
 
     private fun printToast(text: String, e: Throwable? = null) {
