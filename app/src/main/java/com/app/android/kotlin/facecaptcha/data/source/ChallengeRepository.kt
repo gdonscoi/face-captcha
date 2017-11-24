@@ -1,5 +1,7 @@
 package com.app.android.kotlin.facecaptcha.data.source
 
+import android.os.Handler
+import android.os.HandlerThread
 import com.app.android.kotlin.facecaptcha.data.model.challenge.CaptchaResponse
 import com.app.android.kotlin.facecaptcha.data.model.challenge.ChallengeResponse
 import com.app.android.kotlin.facecaptcha.data.source.remote.ChallengeRemoteDataSource
@@ -10,17 +12,32 @@ import com.app.android.kotlin.facecaptcha.data.source.remote.ChallengeRemoteData
  */
 class ChallengeRepository(baseUrl: String, appKey: String) {
 
+    private val handlerThread = HandlerThread(this::javaClass.name)
+    private var handler: Handler
+
     private val dataSource: ChallengeRemoteDataSource = ChallengeRemoteDataSource(baseUrl, appKey)
 
-    fun challenge(params: String, onSuccess: (response: ChallengeResponse) -> Unit) {
-        Thread({
-            val response = dataSource.challenge(params)
-            onSuccess(response)
-        }).start()
+    init {
+        handlerThread.start()
+        handler = Handler(handlerThread.looper)
     }
 
-    fun captcha(chkey: String, images: List<String>, callback: (response: ChallengeResponse) -> Unit): CaptchaResponse {
-        return CaptchaResponse(true, "", "", "")
+    fun destroy() {
+        handler.removeCallbacksAndMessages(null)
+    }
+
+    fun challenge(params: String, onSuccess: (response: ChallengeResponse) -> Unit) {
+        handler.post({
+            val response = dataSource.challenge(params)
+            onSuccess(response)
+        })
+    }
+
+    fun captcha(chkey: String, images: Map<ByteArray, String>, onSuccess: (response: CaptchaResponse) -> Unit) {
+        handler.post({
+            val response = dataSource.captcha(chkey, images)
+            onSuccess(response)
+        })
     }
 
 }
