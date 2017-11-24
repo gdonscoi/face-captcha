@@ -11,53 +11,34 @@
 
     </FrameLayout>
 
+    <ImageView
+        android:id="@+id/iconField"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_margin="20dp"
+        android:layout_above="@id/containerFeedback"/>
+
     <RelativeLayout
         android:id="@+id/containerFeedback"
         android:layout_width="match_parent"
-        android:layout_height="150dp"
+        android:layout_height="100dp"
         android:layout_alignParentBottom="true"
-        android:layout_alignParentLeft="true">
+        android:background="#fff">
 
-        <LinearLayout
-            android:id="@+id/linearLayout"
+        <TextView
+            android:id="@+id/counterField"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_margin="20dp"
+            android:textAppearance="@style/TextAppearance.AppCompat.Large" />
+
+        <ImageView
+            android:id="@+id/messageField"
             android:layout_width="match_parent"
-            android:layout_height="100dp"
-            android:orientation="horizontal">
+            android:layout_toRightOf="@id/counterField"
+            android:layout_height="match_parent"/>
 
-            <!--<TextView-->
-            <!--android:id="@+id/iconField"-->
-            <!--android:layout_width="100dp"-->
-            <!--android:layout_height="wrap_content"-->
-            <!--android:layout_alignParentBottom="true"-->
-            <!--android:layout_alignParentLeft="true"-->
-            <!--android:layout_marginBottom="20dp"-->
-            <!--android:layout_marginLeft="20dp"-->
-            <!--android:textAlignment="center"-->
-            <!--android:textAppearance="@style/TextAppearance.AppCompat.Large"-->
-            <!--android:visibility="visible" />-->
-
-            <TextView
-                android:id="@+id/counterField"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight=".30"
-                android:gravity="center_vertical"
-                android:textAlignment="center"
-                android:textAppearance="@style/TextAppearance.AppCompat.Large" />
-
-            <ImageView
-                android:id="@+id/iconField"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight=".30" />
-
-            <ImageView
-                android:id="@+id/messageField"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight=".70" />
-
-        </LinearLayout>
 
     </RelativeLayout>
 
