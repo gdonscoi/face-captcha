@@ -6,6 +6,10 @@ import android.hardware.Camera
 interface CameraContract {
     interface View {
 
+        fun initialView()
+
+        fun startChallenge()
+
         fun takePicture(pictureCallback: Camera.PictureCallback)
 
         fun loadIcon(icon: Bitmap?)
@@ -14,7 +18,9 @@ interface CameraContract {
 
         fun setCounter(count: String)
 
-        fun showView()
+        fun loadingView()
+
+        fun animationFeedback(visibility: Int, message: String)
 
         fun finishChallenge(valid: Boolean)
     }
