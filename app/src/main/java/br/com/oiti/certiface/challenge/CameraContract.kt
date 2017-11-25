@@ -3,6 +3,7 @@ package br.com.oiti.certiface.challenge
 import android.graphics.Bitmap
 import android.hardware.Camera
 
+
 interface CameraContract {
     interface View {
 

@@ -55,11 +55,11 @@ class ChallengeRemoteDataSource(baseUrl: String, private val appKey: String) {
      *
      * images: Map<key, value> = key: image, value: tipoFace.codigo
      */
-    fun captcha(chkey: String, images: Map<ByteArray, String>): CaptchaResponse {
+    fun captcha(chKey: String, images: Map<ByteArray, String>): CaptchaResponse {
         val stringImages = imagesToString(images)
         val encryptedImages = cryptoData.encrypt(stringImages)
 
-        val call = api.captcha(appKey, chkey, encryptedImages)
+        val call = api.captcha(appKey, chKey, encryptedImages)
         val response = call.execute()
         val captchaResponse = response.body()
 

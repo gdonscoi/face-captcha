@@ -38,7 +38,8 @@ class ChallengeActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissio
     private var preview: FrameLayout? = null
 
     private lateinit var presenter: CameraPresenter
-
+    private lateinit var endpoint: String
+    private lateinit var appKey: String
     private lateinit var userParams: String
 
 
@@ -46,7 +47,9 @@ class ChallengeActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissio
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_challenge)
 
-        userParams = intent.getStringExtra(USER_INFO_KEY)
+        endpoint = intent.getStringExtra(PARAM_ENDPOINT)
+        appKey = intent.getStringExtra(PARAM_APP_KEY)
+        userParams = intent.getStringExtra(PARAM_USER_INFO)
 
         button_start.setOnClickListener { presenter.start(userParams) }
     }
@@ -60,7 +63,7 @@ class ChallengeActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissio
     override fun onResume() {
         super.onResume()
 
-        presenter = CameraPresenter(this@ChallengeActivity)
+        presenter = CameraPresenter(this@ChallengeActivity, endpoint, appKey)
         initialView()
 
         if (checkCameraRequirements()) {
@@ -126,7 +129,7 @@ class ChallengeActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissio
     override fun finishChallenge(valid: Boolean) {
         val data = Intent()
 
-        data.putExtra(ACTIVITY_RESULT_KEY, valid)
+        data.putExtra(PARAM_ACTIVITY_RESULT, valid)
         setResult(RESULT_OK, data)
 
         finish()
@@ -292,9 +295,13 @@ class ChallengeActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissio
 
     companion object {
 
+        // private
         val REQUEST_CAMERA_PERMISSION = 1
 
-        val USER_INFO_KEY = "user_info"
-        val ACTIVITY_RESULT_KEY = "result"
+        // public
+        val PARAM_APP_KEY = "app_key"
+        val PARAM_ENDPOINT = "endpoint"
+        val PARAM_USER_INFO = "user_info"
+        val PARAM_ACTIVITY_RESULT = "result"
     }
 }

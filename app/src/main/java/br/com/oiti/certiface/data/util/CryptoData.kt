@@ -8,9 +8,6 @@ import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
 
-/**
- * Created by bzumpano on 19/11/17.
- */
 class CryptoData(appKey: String) {
 
     init {
@@ -27,12 +24,12 @@ class CryptoData(appKey: String) {
     private val iv = appKey.reversed().substring(0, 16)
 
     private val cipher: Cipher = Cipher.getInstance(ALGORITHM)
-    private val skeySpec: SecretKeySpec = SecretKeySpec(key.toByteArray(), "AES")
+    private val secretKeySpec: SecretKeySpec = SecretKeySpec(key.toByteArray(), "AES")
     private val ivSpec: IvParameterSpec = IvParameterSpec(iv.toByteArray())
 
 
     fun encrypt(data: String): String {
-        cipher.init(Cipher.ENCRYPT_MODE, skeySpec, ivSpec)
+        cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec, ivSpec)
 
         val filled = padData(data)
         val enc = cipher.doFinal(filled.toByteArray())
@@ -40,7 +37,7 @@ class CryptoData(appKey: String) {
     }
 
     fun decrypt(data: String): String {
-        cipher.init(Cipher.DECRYPT_MODE, skeySpec, ivSpec)
+        cipher.init(Cipher.DECRYPT_MODE, secretKeySpec, ivSpec)
 
         val decString = Base64.decode(data.toByteArray())
 

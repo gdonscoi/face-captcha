@@ -7,15 +7,12 @@ import br.com.oiti.certiface.data.model.challenge.ChallengeResponse
 import br.com.oiti.certiface.data.source.remote.ChallengeRemoteDataSource
 
 
-/**
- * Created by bzumpano on 16/11/17.
- */
-class ChallengeRepository(baseUrl: String, appKey: String) {
+class ChallengeRepository(endpoint: String, appKey: String) {
 
     private val handlerThread = HandlerThread(this::javaClass.name)
     private var handler: Handler
 
-    private val dataSource: ChallengeRemoteDataSource = ChallengeRemoteDataSource(baseUrl, appKey)
+    private val dataSource: ChallengeRemoteDataSource = ChallengeRemoteDataSource(endpoint, appKey)
 
     init {
         handlerThread.start()
@@ -33,9 +30,9 @@ class ChallengeRepository(baseUrl: String, appKey: String) {
         })
     }
 
-    fun captcha(chkey: String, images: Map<ByteArray, String>, onSuccess: (response: CaptchaResponse) -> Unit) {
+    fun captcha(chKey: String, images: Map<ByteArray, String>, onSuccess: (response: CaptchaResponse) -> Unit) {
         handler.post({
-            val response = dataSource.captcha(chkey, images)
+            val response = dataSource.captcha(chKey, images)
             onSuccess(response)
         })
     }

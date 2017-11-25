@@ -16,12 +16,12 @@ import java.util.*
 import kotlin.collections.HashMap
 
 
-class CameraPresenter(private val view: CameraContract.View) {
+class CameraPresenter(private val view: CameraContract.View, endpoint: String, appKey: String) {
 
     private val handlerThread = HandlerThread(this::javaClass.name)
     private var handler: Handler
 
-    private val repository = ChallengeRepository(BASE_URL, APP_KEY)
+    private val repository = ChallengeRepository(endpoint, appKey)
 
     private val photos = HashMap<ByteArray, String>()
 
@@ -179,12 +179,5 @@ class CameraPresenter(private val view: CameraContract.View) {
         image.compress(Bitmap.CompressFormat.JPEG, 100, bos)
 
         return bos.toByteArray()
-    }
-
-
-    companion object {
-        // Mock
-        private val BASE_URL = "https://comercial.certiface.com.br:8443"
-        private val APP_KEY = "oKIZ1jjpRyXCDDNiR--_OPNGiNmraDZIuGE1rlUyZwOGJJzDtJR7BahJ4MqnobwetlmjXFsYFeze0eBRAGS2KWmjFUp08HYsv6pyI3KZklISJVmKJDSgfmkRmPaBR9ZJP3wtVWFDwNR9kS_vecameg"
     }
 }
