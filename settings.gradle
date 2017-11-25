@@ -1,1 +1,1 @@
-include ':app', ':certiface'
+include ':sample', ':app'

@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">FaceCaptcha</string>
+    <string name="app_name">Certiface</string>
     <string name="start">iniciar</string>
     <string name="version">faceCAPTCHA 2.71025020</string>
 </resources>
