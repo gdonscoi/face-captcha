@@ -61,6 +61,7 @@ class ChallengeActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissio
         super.onResume()
 
         presenter = CameraPresenter(this@ChallengeActivity)
+        initialView()
 
         if (checkCameraRequirements()) {
             // Create an instance of Camera
@@ -78,6 +79,9 @@ class ChallengeActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissio
         runOnUiThread {
             initialContainer.visibility = View.VISIBLE
             visibilityAnimationFeedback(View.GONE, "")
+            iconField.setImageBitmap(null)
+            messageField.setImageBitmap(null)
+            counterField.text = ""
         }
     }
 
