@@ -21,6 +21,11 @@ import android.widget.FrameLayout
 import android.widget.Toast
 import com.app.android.kotlin.facecaptcha.R
 import kotlinx.android.synthetic.main.activity_challenge.*
+import kotlinx.android.synthetic.main.challenge_view.*
+import kotlinx.android.synthetic.main.feedback_animation.*
+import kotlinx.android.synthetic.main.initial_view.*
+import kotlinx.android.synthetic.main.loading_view.*
+import kotlinx.android.synthetic.main.result_view.*
 
 
 class ChallengeActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissionsResultCallback, CameraContract.View {
@@ -34,11 +39,16 @@ class ChallengeActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissio
 
     private lateinit var presenter: CameraPresenter
 
+    private lateinit var userParams: String
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_challenge)
 
+        userParams = intent.getStringExtra(USER_INFO_KEY)
+
+        button_start.setOnClickListener { presenter.start(userParams) }
     }
 
     override fun onPause() {
@@ -51,6 +61,7 @@ class ChallengeActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissio
         super.onResume()
 
         presenter = CameraPresenter(this@ChallengeActivity)
+        initialView()
 
         if (checkCameraRequirements()) {
             // Create an instance of Camera
@@ -62,8 +73,25 @@ class ChallengeActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissio
             preview = findViewById<View>(R.id.camera_preview) as FrameLayout
             preview?.addView(mPreview)
         }
+    }
 
-        presenter.start(MOCK_PARAMS)
+    override fun initialView() {
+        runOnUiThread {
+            initialContainer.visibility = View.VISIBLE
+            visibilityAnimationFeedback(View.GONE, "")
+            iconField.setImageBitmap(null)
+            messageField.setImageBitmap(null)
+            counterField.text = ""
+        }
+    }
+
+    override fun startChallenge() {
+        runOnUiThread {
+            initialContainer.visibility = View.GONE
+            visibilityChallengeContainer(View.VISIBLE)
+            loadingContainer.visibility = View.GONE
+            feedbackAnimationContainer.visibility = View.GONE
+        }
     }
 
     override fun takePicture(callback: Camera.PictureCallback) {
@@ -88,16 +116,45 @@ class ChallengeActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissio
         }
     }
 
-    override fun showView() {
+    override fun loadingView() {
+        runOnUiThread {
+            visibilityChallengeContainer(View.GONE)
+            loadingContainer.visibility = View.VISIBLE
+        }
     }
 
     override fun finishChallenge(valid: Boolean) {
         val data = Intent()
 
-        data.putExtra("result", valid)
+        data.putExtra(ACTIVITY_RESULT_KEY, valid)
         setResult(RESULT_OK, data)
 
         finish()
+    }
+
+    override fun animationFeedback(visibility: Int, message: String) {
+        runOnUiThread {
+            visibilityChallengeContainer(View.GONE)
+            loadingContainer.visibility = View.GONE
+            visibilityAnimationFeedback(visibility, message)
+        }
+    }
+
+    private fun visibilityAnimationFeedback(visibility: Int, message: String) {
+        feedbackAnimationContainer.visibility = visibility
+        resultContainer.visibility = visibility
+        textAnimation.text = message
+        textResult.text = message
+    }
+
+    override fun onBackPressed() {
+        setResult(RESULT_CANCELED)
+        super.onBackPressed()
+    }
+
+    private fun visibilityChallengeContainer(visibility: Int) {
+        challengeContainer.visibility = visibility
+        iconField.visibility = visibility
     }
 
     private fun releaseCamera() {
@@ -239,5 +296,7 @@ class ChallengeActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissio
 
         // Mock
         val MOCK_PARAMS = "user,comercial.token,cpf,8136822824,nome,ALESSANDRO DE OLIVEIRA FARIA,nascimento,27/05/1972"
+        val USER_INFO_KEY = "user_info"
+        val ACTIVITY_RESULT_KEY = "result"
     }
 }

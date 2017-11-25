@@ -7,6 +7,7 @@ import android.os.Handler
 import android.os.HandlerThread
 import android.os.SystemClock
 import android.util.Log
+import android.view.View
 import com.app.android.kotlin.facecaptcha.data.model.challenge.ChallengeDataResponse
 import com.app.android.kotlin.facecaptcha.data.model.challenge.ChallengeResponse
 import com.app.android.kotlin.facecaptcha.data.source.ChallengeRepository
@@ -31,6 +32,8 @@ class CameraPresenter(private val view: CameraContract.View) {
     }
 
     fun start(params: String) {
+        photos.clear()
+        view.startChallenge()
         repository.challenge(params, { challengeResponse -> startChallenges(challengeResponse) })
     }
 
@@ -87,7 +90,7 @@ class CameraPresenter(private val view: CameraContract.View) {
 
         view.setCounter(durationInSeconds.toString())
 
-        (0..(durationInSeconds-1)).reversed().forEachIndexed { index, it ->
+        (0..(durationInSeconds - 1)).reversed().forEachIndexed { index, it ->
             val delay = (index + 1) * 1000L
             handler.postAtTime({
                 view.setCounter(it.toString())
@@ -138,10 +141,29 @@ class CameraPresenter(private val view: CameraContract.View) {
     }
 
     private fun sendChallenge(chKey: String, images: Map<ByteArray, String>) {
+        view.loadingView()
+
         Log.d(this::class.java.name, "Starting send captcha at " + Date())
         repository.captcha(chKey, images, { captchaResponse ->
             Log.d(this::class.java.name, "Finish send captcha at " + Date() + ". Valid: " + captchaResponse.valid)
-            view.finishChallenge(captchaResponse.valid)
+
+            val messageAnimation: String
+
+            if (captchaResponse.valid) {
+                messageAnimation = "Sucesso na autenticação"
+                handler.post({
+                    Thread.sleep(2500)
+                    view.finishChallenge(captchaResponse.valid)
+                })
+            } else {
+                messageAnimation = "Erro na autenticação"
+                handler.post({
+                    Thread.sleep(2500)
+                    view.initialView()
+                })
+            }
+
+            view.animationFeedback(View.VISIBLE, messageAnimation)
         })
     }
 
