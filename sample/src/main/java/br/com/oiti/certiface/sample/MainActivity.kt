@@ -7,7 +7,6 @@ import android.support.v7.app.AppCompatActivity
 import android.widget.Toast
 import br.com.oiti.certiface.challenge.AbstractChallengeActivity
 import br.com.oiti.certiface.challenge.Camera2Activity
-import br.com.oiti.certiface.challenge.CameraActivity
 import br.com.oiti.certiface.challenge.ChallengeActivity
 import kotlinx.android.synthetic.main.activity_main.*
 
@@ -25,8 +24,8 @@ class MainActivity : AppCompatActivity() {
 
 
     private fun startChallenge(context: Context) {
-        val intent = Intent(context, ChallengeActivity::class.java).apply {
-//        val intent = Intent(context, Camera2Activity::class.java).apply {
+//        val intent = Intent(context, ChallengeActivity::class.java).apply {
+        val intent = Intent(context, Camera2Activity::class.java).apply {
             putExtra(AbstractChallengeActivity.PARAM_ENDPOINT, ENDPOINT)
             putExtra(AbstractChallengeActivity.PARAM_APP_KEY, APP_KEY)
             putExtra(AbstractChallengeActivity.PARAM_USER_INFO, USER_INFO)
