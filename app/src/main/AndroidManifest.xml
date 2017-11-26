@@ -6,6 +6,7 @@
     <uses-permission android:name="android.permission.CAMERA" />
 
     <uses-feature android:name="android.hardware.camera.front" />
+    <uses-feature android:name="android.hardware.camera2.full" />
 
     <uses-permission android:name="android.permission.WRITE_INTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
@@ -16,6 +17,12 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity android:name=".challenge.ChallengeActivity"
+            android:screenOrientation="portrait">
+        </activity>
+        <activity android:name=".challenge.CameraActivity"
+            android:screenOrientation="portrait">
+        </activity>
+        <activity android:name=".challenge.Camera2Activity"
             android:screenOrientation="portrait">
         </activity>
     </application>

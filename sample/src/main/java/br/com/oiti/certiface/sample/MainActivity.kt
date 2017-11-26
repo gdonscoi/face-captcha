@@ -5,6 +5,9 @@ import android.content.Intent
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.widget.Toast
+import br.com.oiti.certiface.challenge.AbstractChallengeActivity
+import br.com.oiti.certiface.challenge.Camera2Activity
+import br.com.oiti.certiface.challenge.CameraActivity
 import br.com.oiti.certiface.challenge.ChallengeActivity
 import kotlinx.android.synthetic.main.activity_main.*
 
@@ -23,9 +26,10 @@ class MainActivity : AppCompatActivity() {
 
     private fun startChallenge(context: Context) {
         val intent = Intent(context, ChallengeActivity::class.java).apply {
-            putExtra(ChallengeActivity.PARAM_ENDPOINT, ENDPOINT)
-            putExtra(ChallengeActivity.PARAM_APP_KEY, APP_KEY)
-            putExtra(ChallengeActivity.PARAM_USER_INFO, USER_INFO)
+//        val intent = Intent(context, Camera2Activity::class.java).apply {
+            putExtra(AbstractChallengeActivity.PARAM_ENDPOINT, ENDPOINT)
+            putExtra(AbstractChallengeActivity.PARAM_APP_KEY, APP_KEY)
+            putExtra(AbstractChallengeActivity.PARAM_USER_INFO, USER_INFO)
         }
 
         startActivityForResult(intent, CAPTCHA_RESULT)
@@ -36,7 +40,7 @@ class MainActivity : AppCompatActivity() {
 
         if (requestCode == 1) {
             if (requestCode == RESULT_OK) {
-                val result = data?.getBooleanExtra(ChallengeActivity.PARAM_ACTIVITY_RESULT, false)
+                val result = data?.getBooleanExtra(AbstractChallengeActivity.PARAM_ACTIVITY_RESULT, false)
                 Toast.makeText(MainActivity@ this, "Sucesso: $result", Toast.LENGTH_LONG).show()
             }
 
