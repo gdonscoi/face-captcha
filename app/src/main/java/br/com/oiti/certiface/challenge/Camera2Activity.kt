@@ -1,38 +1,33 @@
 package br.com.oiti.certiface.challenge
 
-import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
-import android.content.pm.PackageManager
 import android.graphics.ImageFormat
 import android.graphics.SurfaceTexture
 import android.hardware.camera2.*
 import android.media.ImageReader
-import android.os.*
+import android.os.Build
+import android.os.Bundle
+import android.os.Handler
+import android.os.HandlerThread
 import android.support.annotation.RequiresApi
-import android.support.v4.app.ActivityCompat
-import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.util.Size
 import android.util.SparseIntArray
 import android.view.Surface
 import android.view.TextureView
-import android.widget.Button
-import android.widget.Toast
-import br.com.oiti.certiface.R
+import android.view.View
 import br.com.oiti.certiface.challenge.camera2.*
-import java.io.*
 import java.util.*
 
 
 /**
- * @see https://inducesmile.com/android/android-camera2-api-example-tutorial/
+ * @see <a href="https://inducesmile.com/android/android-camera2-api-example-tutorial/" />
  */
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-class Camera2Activity : AppCompatActivity() {
+class Camera2Activity : AbstractChallengeActivity() {
 
-
-    private val takePictureButton by lazy { findViewById<Button>(R.id.btn_takepicture) }
-    private val textureView by lazy { findViewById<TextureView>(R.id.texture) }
+    private val cameraPreview by lazy { TextureView(this@Camera2Activity) }
 
     private val mBackgroundHandler: Handler
     private val mBackgroundThread: HandlerThread
@@ -56,39 +51,83 @@ class Camera2Activity : AppCompatActivity() {
                 cameraDevice = null
             })
 
+    override fun getCameraPreview(): View? = cameraPreview
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_camera2)
 
-        textureView.surfaceTextureListener = textureListener
-        takePictureButton.setOnClickListener({ takePicture() })
+        cameraPreview.surfaceTextureListener = textureListener
     }
 
     override fun onResume() {
         super.onResume()
 
-        if (textureView.isAvailable) {
-            openFrontFacingCamera()
-        } else {
-            textureView.surfaceTextureListener = textureListener
-        }
-    }
+        if (hasCameraRequirements()) {
+            preview.addView(cameraPreview)
 
-    override fun onPause() {
-        Log.e(TAG, "onPause")
-        //closeCamera()
-        stopBackgroundThread()
-        super.onPause()
-    }
-
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        if (requestCode == REQUEST_CAMERA_PERMISSION) {
-            if (grantResults[0] == PackageManager.PERMISSION_DENIED) {
-                // close the app
-                printToast("Sorry!!!, you can't use this app without granting permission")
-                finish()
+            if (cameraPreview.isAvailable) {
+                openFrontFacingCamera()
+            } else {
+                cameraPreview.surfaceTextureListener = textureListener
             }
         }
+    }
+
+    override fun buildTakePictureCallback(photos: HashMap<ByteArray, String>, afterTakePicture: (data: ByteArray) -> Unit): Any {
+        val callback = ImageReaderListener({
+            it.acquireLatestImage().use { image ->
+                Log.d(TAG, "Callback invoked at " + Date().time)
+                val buffer = image.planes[0].buffer
+                val data = ByteArray(buffer.capacity())
+
+                buffer.get(data)
+                afterTakePicture(data)
+            }
+        })
+
+        return callback
+    }
+
+    override fun takePicture(callback: Any) {
+        val imageReaderListener = callback as ImageReaderListener
+        val reader = getImageReader()
+        val outputSurfaces = ArrayList<Surface>()
+        outputSurfaces.add(reader.surface)
+        outputSurfaces.add(Surface(cameraPreview.surfaceTexture))
+
+        val captureBuilder = cameraDevice!!.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE)
+        captureBuilder.addTarget(reader.surface)
+        captureBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO)
+
+        // Orientation
+        val rotation = windowManager.defaultDisplay.rotation
+        captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, ORIENTATIONS.get(rotation))
+
+        reader.setOnImageAvailableListener(imageReaderListener, mBackgroundHandler)
+
+        val imageCaptureListener = CameraCaptureSessionCaptureCallback({_, _ -> createCameraPreview() })
+        val captureSessionStateCallback = CameraCaptureSessionStateCallback({ it.capture(captureBuilder.build(), imageCaptureListener, mBackgroundHandler) })
+
+        cameraDevice!!.createCaptureSession(outputSurfaces, captureSessionStateCallback, mBackgroundHandler)
+    }
+
+    override fun getFrontFacingCameraId(): String? {
+
+        val manager = getSystemService(Context.CAMERA_SERVICE) as CameraManager
+
+        manager.cameraIdList.forEach {
+            val characteristics = manager.getCameraCharacteristics(it)
+            val facing = characteristics.get(CameraCharacteristics.LENS_FACING)
+            if (facing == CameraCharacteristics.LENS_FACING_FRONT) {
+                return it
+            }
+        }
+
+        return null
+    }
+
+    override fun releaseCamera() {
+        stopBackgroundThread()
     }
 
     private fun stopBackgroundThread() {
@@ -102,104 +141,53 @@ class Camera2Activity : AppCompatActivity() {
         }
     }
 
-    private fun takePicture() {
-
-        cameraDevice ?: run {
-            Log.e(TAG, "cameraDevice is null")
-            return
-        }
-
+    private fun getImageReader(): ImageReader {
         val manager = getSystemService(Context.CAMERA_SERVICE) as CameraManager
+        val characteristics = manager.getCameraCharacteristics(cameraDevice!!.id)
+        var jpegSizes: Array<Size>? = null
+        var width = 640
+        var height = 480
 
-        try {
-            val characteristics = manager.getCameraCharacteristics(cameraDevice!!.id)
-            var jpegSizes: Array<Size>? = null
-            if (characteristics != null) {
-                jpegSizes = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP).getOutputSizes(ImageFormat.JPEG)
-            }
-            var width = 640
-            var height = 480
-
-            if (jpegSizes?.isNotEmpty() == true) {
-                width = jpegSizes[0].width
-                height = jpegSizes[0].height
-            }
-
-            val reader = ImageReader.newInstance(width, height, ImageFormat.JPEG, 1)
-            val outputSurfaces = ArrayList<Surface>(2)
-            outputSurfaces.add(reader.surface)
-            outputSurfaces.add(Surface(textureView!!.surfaceTexture))
-
-            val captureBuilder = cameraDevice!!.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE)
-            captureBuilder.addTarget(reader.surface)
-            captureBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO)
-
-            // Orientation
-            val rotation = windowManager.defaultDisplay.rotation
-            captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, ORIENTATIONS.get(rotation))
-
-
-            val imageReaderListener = ImageReaderListener({
-                reader.acquireLatestImage().use { image ->
-                    val buffer = image.planes[0].buffer
-                    val bytes = ByteArray(buffer.capacity())
-                    buffer.get(bytes)
-                    save(bytes)
-                }
-            })
-            reader.setOnImageAvailableListener(imageReaderListener, mBackgroundHandler)
-
-            val imageCaptureListener = CameraCaptureSessionCaptureCallback({ createCameraPreview() })
-            val captureSessionStateCallback = CameraCaptureSessionStateCallback({ it.capture(captureBuilder.build(), imageCaptureListener, mBackgroundHandler) })
-
-            cameraDevice?.createCaptureSession(outputSurfaces, captureSessionStateCallback, mBackgroundHandler)
-        } catch (e: CameraAccessException) {
-            e.printStackTrace()
+        characteristics?.let {
+            jpegSizes = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP).getOutputSizes(ImageFormat.JPEG)
         }
+
+        if (jpegSizes?.isNotEmpty() == true) {
+            width = jpegSizes!![0].width
+            height = jpegSizes!![0].height
+        }
+
+//        return ImageReader.newInstance(width, height, ImageFormat.JPEG, 1)
+        return ImageReader.newInstance(imageDimension!!.width, imageDimension!!.height, ImageFormat.JPEG, 1)
     }
 
-    @Throws(IOException::class)
-    private fun save(bytes: ByteArray) {
-        val file = File(Environment.getExternalStorageDirectory().path + "/pic.jpg")
-        var output: OutputStream?  = null
-        try {
-            output = FileOutputStream(file)
-            output.write(bytes)
-        } finally {
-            output?.close()
-        }
-    }
-    
     private fun createCameraPreview() {
-        try {
-            val texture = textureView.surfaceTexture
+        val texture = cameraPreview.surfaceTexture
 
-            texture.setDefaultBufferSize(imageDimension!!.width, imageDimension!!.height)
-            val surface = Surface(texture)
-            captureRequestBuilder = cameraDevice!!.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
-            captureRequestBuilder?.addTarget(surface)
+        texture.setDefaultBufferSize(imageDimension!!.width, imageDimension!!.height)
+        val surface = Surface(texture)
+        captureRequestBuilder = cameraDevice!!.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
+        captureRequestBuilder!!.addTarget(surface)
 
-            val cameraCaptureSessionStateCallback = object: CameraCaptureSession.StateCallback(){
+        val cameraCaptureSessionStateCallback = object: CameraCaptureSession.StateCallback(){
 
-                override fun onConfigured(cameraCaptureSession: CameraCaptureSession) {
-                    cameraDevice?.let {
-                        // When the session is ready, we start displaying the preview.
-                        cameraCaptureSessions = cameraCaptureSession
-                        updatePreview()
-                    }
-                }
-
-                override fun onConfigureFailed(cameraCaptureSession: CameraCaptureSession) {
-                    printToast("Configuration change")
+            override fun onConfigured(cameraCaptureSession: CameraCaptureSession) {
+                cameraDevice?.let {
+                    // When the session is ready, we start displaying the preview.
+                    cameraCaptureSessions = cameraCaptureSession
+                    updatePreview()
                 }
             }
 
-            cameraDevice?.createCaptureSession(Arrays.asList(surface), cameraCaptureSessionStateCallback, null)
-            } catch (e: CameraAccessException) {
-                 e.printStackTrace()
+            override fun onConfigureFailed(cameraCaptureSession: CameraCaptureSession) {
+                printToast("Configuration change")
             }
+        }
+
+        cameraDevice!!.createCaptureSession(Arrays.asList(surface), cameraCaptureSessionStateCallback, null)
     }
 
+    @SuppressLint("MissingPermission")
     private fun openFrontFacingCamera() {
         val manager = getSystemService(Context.CAMERA_SERVICE) as CameraManager
 
@@ -208,51 +196,13 @@ class Camera2Activity : AppCompatActivity() {
         val map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)!!
 
         imageDimension = map.getOutputSizes(SurfaceTexture::class.java)[0]
-        // Add permission for camera and let user grant the permission
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this@Camera2Activity, arrayOf(Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE), REQUEST_CAMERA_PERMISSION)
-            return
-        }
+
         manager.openCamera(cameraId, stateCallback, null)
     }
 
-
-    private fun getFrontFacingCameraId(): String? {
-
-        val manager = getSystemService(Context.CAMERA_SERVICE) as CameraManager
-
-        manager.cameraIdList.forEach {
-            // We don't use a front facing camera in this sample.
-            val characteristics = manager.getCameraCharacteristics(it)
-            val facing = characteristics.get(CameraCharacteristics.LENS_FACING);
-            if (facing == CameraCharacteristics.LENS_FACING_FRONT) {
-                return it
-            }
-        }
-
-        return null
-    }
-
     private fun updatePreview() {
-        if(null == cameraDevice) {
-            Log.e(TAG, "updatePreview error, return")
-        }
         captureRequestBuilder?.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO)
-        try {
-            cameraCaptureSessions?.setRepeatingRequest(captureRequestBuilder!!.build(), null, mBackgroundHandler)
-        } catch (e: CameraAccessException) {
-            e.printStackTrace()
-        }
-    }
-
-    private fun printToast(text: String, e: Throwable? = null) {
-        val context = applicationContext
-        val duration = Toast.LENGTH_SHORT
-
-        val toast = Toast.makeText(context, text, duration)
-        toast.show()
-
-        e?.let { Log.d(TAG, text + ": " + e.message, e) }
+        cameraCaptureSessions?.setRepeatingRequest(captureRequestBuilder!!.build(), null, mBackgroundHandler)
     }
 
     init {
@@ -267,8 +217,6 @@ class Camera2Activity : AppCompatActivity() {
     }
 
     companion object {
-        private var TAG = this::class.java.name
-        private val REQUEST_CAMERA_PERMISSION = 200
         private val ORIENTATIONS = SparseIntArray()
     }
 

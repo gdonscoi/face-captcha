@@ -1,9 +1,6 @@
 package br.com.oiti.certiface.challenge.camera2
 
-import android.hardware.camera2.CameraAccessException
 import android.hardware.camera2.CameraCaptureSession
-import android.hardware.camera2.CaptureRequest
-import android.hardware.camera2.TotalCaptureResult
 
 /**
  * Created by bzumpano on 26/11/17.

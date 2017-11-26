@@ -5,7 +5,6 @@ import android.graphics.ImageFormat
 import android.hardware.Camera
 import android.view.Surface
 import android.view.View
-import br.com.oiti.certiface.R
 
 
 class ChallengeActivity : AbstractChallengeActivity() {
@@ -13,8 +12,6 @@ class ChallengeActivity : AbstractChallengeActivity() {
     private var camera: Camera? = null
     private var cameraPreview: CameraPreview? = null
 
-
-    override fun getLayout(): Int = R.layout.activity_challenge
 
     override fun getCameraPreview(): View? = cameraPreview
 
@@ -31,23 +28,28 @@ class ChallengeActivity : AbstractChallengeActivity() {
         }
     }
 
-    override fun takePicture(callback: Camera.PictureCallback) {
-        camera?.takePicture(null, null, callback)
+    override fun buildTakePictureCallback(photos: HashMap<ByteArray, String>, afterTakePicture: (data: ByteArray) -> Unit): Any {
+        val callback = Camera.PictureCallback { data, camera ->
+            afterTakePicture(data)
+            camera.startPreview()
+        }
+
+        return callback
     }
 
-    override fun onBackPressed() {
-        setResult(RESULT_CANCELED)
-        super.onBackPressed()
+
+    override fun takePicture(callback: Any) {
+        camera?.takePicture(null, null, callback as Camera.PictureCallback)
     }
 
-    override fun getFrontFacingCameraId(): Int? {
+    override fun getFrontFacingCameraId(): String? {
         var count = Camera.getNumberOfCameras()
         val info = Camera.CameraInfo()
 
         (0..count).forEach({ id ->
             Camera.getCameraInfo(id, info)
             if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
-                return id
+                return id.toString()
             }
         })
         return null
@@ -63,9 +65,9 @@ class ChallengeActivity : AbstractChallengeActivity() {
         var cam: Camera? = null
 
         getFrontFacingCameraId()?.let { camId ->
-            Camera.open(camId).let {
+            Camera.open(camId.toInt()).let {
                 cam = it
-                setCameraDisplayOrientation(this@ChallengeActivity, camId, it)
+                setCameraDisplayOrientation(this@ChallengeActivity, camId.toInt(), it)
                 setCameraParameters(it)
             }
         }

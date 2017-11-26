@@ -2,6 +2,7 @@ package br.com.oiti.certiface.challenge
 
 import android.graphics.Bitmap
 import android.hardware.Camera
+import android.os.Handler
 
 
 interface CameraContract {
@@ -11,7 +12,9 @@ interface CameraContract {
 
         fun startChallenge()
 
-        fun takePicture(pictureCallback: Camera.PictureCallback)
+        fun buildTakePictureCallback(photos: HashMap<ByteArray, String>, afterTakePicture: (data: ByteArray) -> Unit): Any
+
+        fun takePicture(callback: Any)
 
         fun loadIcon(icon: Bitmap?)
 

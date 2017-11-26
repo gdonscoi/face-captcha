@@ -6,7 +6,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.os.Bundle
-import android.support.annotation.NonNull
 import android.support.v4.app.ActivityCompat
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
@@ -24,7 +23,7 @@ abstract class AbstractChallengeActivity: AppCompatActivity(), ActivityCompat.On
     private val userParams by lazy { intent.getStringExtra(PARAM_USER_INFO) }
 
 
-    private val initialContainer by lazy { findViewById<Button>(R.id.initialContainer) }
+    private val initialContainer by lazy { findViewById<RelativeLayout>(R.id.initialContainer) }
     private val loadingContainer by lazy { findViewById<RelativeLayout>(R.id.loadingContainer) }
     private val feedbackAnimationContainer by lazy { findViewById<RelativeLayout>(R.id.feedbackAnimationContainer) }
     private val resultContainer by lazy { findViewById<RelativeLayout>(R.id.resultContainer) }
@@ -35,20 +34,19 @@ abstract class AbstractChallengeActivity: AppCompatActivity(), ActivityCompat.On
     private val textResult by lazy { findViewById<TextView>(R.id.textResult) }
     private val messageField by lazy { findViewById<ImageView>(R.id.messageField) }
     private val counterField by lazy { findViewById<TextView>(R.id.counterField) }
-    private val iconField by lazy { findViewById<ImageView>(R.id.icon) }
+    private val iconField by lazy { findViewById<ImageView>(R.id.iconField) }
 
 
     protected val preview by lazy { findViewById<FrameLayout>(R.id.camera_preview)!! }
 
 
-    abstract fun getLayout(): Int
-    abstract fun getFrontFacingCameraId(): Int?
+    abstract fun getFrontFacingCameraId(): String?
     abstract fun releaseCamera()
     abstract fun getCameraPreview(): View?
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(getLayout())
+        setContentView(R.layout.activity_challenge)
 
         buttonStart.setOnClickListener { presenter.start(userParams) }
     }

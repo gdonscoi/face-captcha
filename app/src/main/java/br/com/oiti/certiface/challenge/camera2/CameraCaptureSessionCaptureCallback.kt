@@ -8,10 +8,10 @@ import android.hardware.camera2.TotalCaptureResult
 /**
  * Created by bzumpano on 26/11/17.
  */
-class CameraCaptureSessionCaptureCallback(private val onCaptureCompleteCallback: () -> Unit): CameraCaptureSession.CaptureCallback() {
+class CameraCaptureSessionCaptureCallback(private val onCaptureCompleteCallback: (session: CameraCaptureSession, request: CaptureRequest) -> Unit): CameraCaptureSession.CaptureCallback() {
 
     override fun onCaptureCompleted(session: CameraCaptureSession, request: CaptureRequest, result: TotalCaptureResult) {
         super.onCaptureCompleted(session, request, result)
-        onCaptureCompleteCallback()
+        onCaptureCompleteCallback(session, request)
     }
 }

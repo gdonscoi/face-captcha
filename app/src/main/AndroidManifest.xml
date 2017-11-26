@@ -19,9 +19,6 @@
         <activity android:name=".challenge.ChallengeActivity"
             android:screenOrientation="portrait">
         </activity>
-        <activity android:name=".challenge.CameraActivity"
-            android:screenOrientation="portrait">
-        </activity>
         <activity android:name=".challenge.Camera2Activity"
             android:screenOrientation="portrait">
         </activity>

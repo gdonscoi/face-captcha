@@ -2,7 +2,6 @@ package br.com.oiti.certiface.challenge
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.hardware.Camera
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.SystemClock
@@ -56,15 +55,19 @@ class CameraPresenter(private val view: CameraContract.View, endpoint: String, a
 
         apiResponse.challenges.forEach { challenge ->
             val challengeDurationInMillis = challenge.tempoEmSegundos * 1000
+            val tipoFaceCodigo = challenge.tipoFace.codigo
 
             scheduleChallenge(
                     challenge,
                     startChallengeAtInMillis,
                     snapFrequenceInMillis,
-                    {
-                        if (totalChallengePictures == photos.size) {
-                            sendChallenge(chKey, photos)
-                        }
+                    { data ->
+                        handler.post({
+                            photos.put(reduceImage(data), tipoFaceCodigo)
+                            if (totalChallengePictures == photos.size) {
+                                sendChallenge(chKey, photos)
+                            }
+                        })
                     })
 
             // IMPORTANTE: Não podemos deixar de incremetar o tempo de cada desafio no final
@@ -98,18 +101,11 @@ class CameraPresenter(private val view: CameraContract.View, endpoint: String, a
         }
     }
 
-    private fun scheduleChallenge(challenge: ChallengeDataResponse, startAt: Long, snapFrequenceInMillis: Int, afterTakePicture: () -> Unit) {
+    private fun scheduleChallenge(challenge: ChallengeDataResponse, startAt: Long, snapFrequenceInMillis: Int, afterTakePicture: (data: ByteArray) -> Unit) {
         val challengeDurationInMillis = challenge.tempoEmSegundos * 1000
         val numberOfPictures = challengeDurationInMillis / snapFrequenceInMillis
-        val tipoFaceCodigo = challenge.tipoFace.codigo
 
-        val callback = Camera.PictureCallback { data, camera ->
-            handler.post({
-                photos.put(reduceImage(data), tipoFaceCodigo)
-                afterTakePicture()
-            })
-            camera.startPreview()
-        }
+        val callback = view.buildTakePictureCallback(photos, afterTakePicture)
 
         // Agenda para alterar icone e imagem do desafio
         handler.postAtTime({ loadChallenge(challenge) }, getPostAtTime(startAt))
@@ -136,8 +132,8 @@ class CameraPresenter(private val view: CameraContract.View, endpoint: String, a
         view.loadIcon(icon)
     }
 
-    private fun takePicture(pictureCallback: Camera.PictureCallback) {
-        view.takePicture(pictureCallback)
+    private fun takePicture(callback: Any) {
+        view.takePicture(callback)
     }
 
     private fun sendChallenge(chKey: String, images: Map<ByteArray, String>) {
