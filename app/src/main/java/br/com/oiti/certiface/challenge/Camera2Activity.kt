@@ -172,7 +172,7 @@ class Camera2Activity : AppCompatActivity() {
     
     private fun createCameraPreview() {
         try {
-            val texture = textureView!!.surfaceTexture!!
+            val texture = textureView.surfaceTexture
 
             texture.setDefaultBufferSize(imageDimension!!.width, imageDimension!!.height)
             val surface = Surface(texture)
@@ -220,10 +220,10 @@ class Camera2Activity : AppCompatActivity() {
     private fun getFrontFacingCameraId(): String? {
 
         val manager = getSystemService(Context.CAMERA_SERVICE) as CameraManager
-        val characteristics = manager.getCameraCharacteristics(cameraId)
 
         manager.cameraIdList.forEach {
             // We don't use a front facing camera in this sample.
+            val characteristics = manager.getCameraCharacteristics(it)
             val facing = characteristics.get(CameraCharacteristics.LENS_FACING);
             if (facing == CameraCharacteristics.LENS_FACING_FRONT) {
                 return it

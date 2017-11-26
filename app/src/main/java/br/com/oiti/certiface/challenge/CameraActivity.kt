@@ -3,7 +3,6 @@ package br.com.oiti.certiface.challenge
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.*
 import android.hardware.Camera
@@ -20,17 +19,11 @@ import android.util.SparseIntArray
 import android.view.OrientationEventListener
 import android.view.Surface
 import android.view.TextureView
-import android.view.View
 import android.widget.FrameLayout
 import android.widget.Toast
 import br.com.oiti.certiface.R
 import br.com.oiti.certiface.challenge.test.*
-import kotlinx.android.synthetic.main.activity_challenge.*
-import kotlinx.android.synthetic.main.challenge_view.*
-import kotlinx.android.synthetic.main.feedback_animation.*
 import kotlinx.android.synthetic.main.initial_view.*
-import kotlinx.android.synthetic.main.loading_view.*
-import kotlinx.android.synthetic.main.result_view.*
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
@@ -40,14 +33,9 @@ import java.util.concurrent.atomic.AtomicInteger
 
 
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-class CameraActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissionsResultCallback, CameraContract.View {
+class CameraActivity : AppCompatActivity() {
 
     private var TAG = this.javaClass.name
-
-    private var mCamera: Camera? = null
-    private var mPreview: CameraPreview? = null
-
-    private var preview: FrameLayout? = null
 
     private lateinit var presenter: CameraPresenter
     private lateinit var endpoint: String
@@ -521,71 +509,6 @@ class CameraActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissionsR
         }
     }
 
-    override fun initialView() {
-        runOnUiThread {
-            initialContainer.visibility = View.VISIBLE
-            visibilityAnimationFeedback(View.GONE, "")
-            iconField.setImageBitmap(null)
-            messageField.setImageBitmap(null)
-            counterField.text = ""
-        }
-    }
-
-    override fun startChallenge() {
-        runOnUiThread {
-            initialContainer.visibility = View.GONE
-            visibilityChallengeContainer(View.VISIBLE)
-            loadingContainer.visibility = View.GONE
-            feedbackAnimationContainer.visibility = View.GONE
-        }
-    }
-
-    override fun takePicture(callback: Camera.PictureCallback) {
-        mCamera?.takePicture(null, null, callback)
-    }
-
-    override fun loadIcon(icon: Bitmap?) {
-        runOnUiThread {
-            iconField.setImageBitmap(icon)
-        }
-    }
-
-    override fun setMessage(message: Bitmap?) {
-        runOnUiThread {
-            messageField.setImageBitmap(message)
-        }
-    }
-
-    override fun setCounter(count: String) {
-        runOnUiThread {
-            counterField.text = count
-        }
-    }
-
-    override fun loadingView() {
-        runOnUiThread {
-            visibilityChallengeContainer(View.GONE)
-            loadingContainer.visibility = View.VISIBLE
-        }
-    }
-
-    override fun finishChallenge(valid: Boolean) {
-        val data = Intent()
-
-        data.putExtra(PARAM_ACTIVITY_RESULT, valid)
-        setResult(RESULT_OK, data)
-
-        finish()
-    }
-
-    override fun animationFeedback(visibility: Int, message: String) {
-        runOnUiThread {
-            visibilityChallengeContainer(View.GONE)
-            loadingContainer.visibility = View.GONE
-            visibilityAnimationFeedback(visibility, message)
-        }
-    }
-
     /**
      * Closes the current [CameraDevice].
      */
@@ -648,23 +571,6 @@ class CameraActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissionsR
             e.printStackTrace()
         }
 
-    }
-
-    private fun visibilityAnimationFeedback(visibility: Int, message: String) {
-        feedbackAnimationContainer.visibility = visibility
-        resultContainer.visibility = visibility
-        textAnimation.text = message
-        textResult.text = message
-    }
-
-    override fun onBackPressed() {
-        setResult(RESULT_CANCELED)
-        super.onBackPressed()
-    }
-
-    private fun visibilityChallengeContainer(visibility: Int) {
-        challengeContainer.visibility = visibility
-        iconField.visibility = visibility
     }
 
     /**

@@ -1,17 +1,10 @@
 package br.com.oiti.certiface.challenge
 
-import android.Manifest
 import android.app.Activity
-import android.content.Context
-import android.content.pm.PackageManager
 import android.graphics.ImageFormat
 import android.hardware.Camera
-import android.os.Build
-import android.support.annotation.RequiresApi
-import android.support.v4.content.ContextCompat
-import android.util.Log
 import android.view.Surface
-import android.widget.FrameLayout
+import android.view.View
 import br.com.oiti.certiface.R
 
 
@@ -20,7 +13,10 @@ class ChallengeActivity : AbstractChallengeActivity() {
     private var camera: Camera? = null
     private var cameraPreview: CameraPreview? = null
 
-    private val preview by lazy { findViewById<FrameLayout>(R.id.camera_preview) }
+
+    override fun getLayout(): Int = R.layout.activity_challenge
+
+    override fun getCameraPreview(): View? = cameraPreview
 
     override fun onResume() {
         super.onResume()
@@ -61,8 +57,6 @@ class ChallengeActivity : AbstractChallengeActivity() {
     override fun releaseCamera() {
         camera?.release()
         camera = null
-
-        preview?.removeView(cameraPreview)
     }
 
     private fun openFrontFacingCamera(): Camera? {

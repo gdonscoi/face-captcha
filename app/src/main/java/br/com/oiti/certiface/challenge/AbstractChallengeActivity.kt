@@ -5,22 +5,14 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
-import android.os.Build
 import android.os.Bundle
-import android.support.annotation.RequiresApi
+import android.support.annotation.NonNull
 import android.support.v4.app.ActivityCompat
-import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.View
-import android.widget.Toast
+import android.widget.*
 import br.com.oiti.certiface.R
-import kotlinx.android.synthetic.main.activity_challenge.*
-import kotlinx.android.synthetic.main.challenge_view.*
-import kotlinx.android.synthetic.main.feedback_animation.*
-import kotlinx.android.synthetic.main.initial_view.*
-import kotlinx.android.synthetic.main.loading_view.*
-import kotlinx.android.synthetic.main.result_view.*
 
 
 abstract class AbstractChallengeActivity: AppCompatActivity(), ActivityCompat.OnRequestPermissionsResultCallback, CameraContract.View {
@@ -31,16 +23,34 @@ abstract class AbstractChallengeActivity: AppCompatActivity(), ActivityCompat.On
     private val appKey by lazy { intent.getStringExtra(PARAM_APP_KEY) }
     private val userParams by lazy { intent.getStringExtra(PARAM_USER_INFO) }
 
+
+    private val initialContainer by lazy { findViewById<Button>(R.id.initialContainer) }
+    private val loadingContainer by lazy { findViewById<RelativeLayout>(R.id.loadingContainer) }
+    private val feedbackAnimationContainer by lazy { findViewById<RelativeLayout>(R.id.feedbackAnimationContainer) }
+    private val resultContainer by lazy { findViewById<RelativeLayout>(R.id.resultContainer) }
+    private val challengeContainer by lazy { findViewById<RelativeLayout>(R.id.challengeContainer) }
+
+    private val buttonStart by lazy { findViewById<Button>(R.id.button_start) }
+    private val textAnimation by lazy { findViewById<TextView>(R.id.textAnimation) }
+    private val textResult by lazy { findViewById<TextView>(R.id.textResult) }
+    private val messageField by lazy { findViewById<ImageView>(R.id.messageField) }
+    private val counterField by lazy { findViewById<TextView>(R.id.counterField) }
+    private val iconField by lazy { findViewById<ImageView>(R.id.icon) }
+
+
+    protected val preview by lazy { findViewById<FrameLayout>(R.id.camera_preview)!! }
+
+
+    abstract fun getLayout(): Int
     abstract fun getFrontFacingCameraId(): Int?
-
     abstract fun releaseCamera()
-
+    abstract fun getCameraPreview(): View?
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_challenge)
+        setContentView(getLayout())
 
-        button_start.setOnClickListener { presenter.start(userParams) }
+        buttonStart.setOnClickListener { presenter.start(userParams) }
     }
 
     override fun onResume() {
@@ -54,6 +64,8 @@ abstract class AbstractChallengeActivity: AppCompatActivity(), ActivityCompat.On
         super.onPause()
         presenter.destroy()
         releaseCamera()
+
+        preview.removeView(getCameraPreview())
     }
 
     override fun onBackPressed() {
@@ -194,7 +206,7 @@ abstract class AbstractChallengeActivity: AppCompatActivity(), ActivityCompat.On
         val PARAM_ACTIVITY_RESULT = "certiface_result"
 
         @JvmStatic
-        protected val TAG = this::class.java.name
+        protected val TAG = this::class.java.name!!
 
         @JvmStatic
         protected val REQUEST_CAMERA_PERMISSION = 200

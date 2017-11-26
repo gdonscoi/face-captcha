@@ -3,21 +3,71 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/gray"
     android:orientation="vertical"
     tools:context=".challenge.Camera2Activity">
-    <TextureView
-        android:id="@+id/texture"
+
+    <FrameLayout
+        android:id="@+id/camera_preview"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_above="@+id/btn_takepicture"
-        android:layout_alignParentTop="true"/>
-    <Button
-        android:id="@+id/btn_takepicture"
+        android:layout_height="match_parent"
+        android:layout_above="@id/feedbackContainer"
+        android:layout_marginLeft="15dp"
+        android:layout_marginRight="15dp"
+        android:layout_marginTop="15dp"
+        android:background="#fff" />
+
+    <include layout="@layout/feedback_animation"/>
+
+    <ImageView
+        android:id="@+id/iconField"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_above="@id/feedbackContainer"
+        android:layout_marginBottom="20dp"
+        android:layout_marginLeft="35dp" />
+
+    <!--<TextureView-->
+        <!--android:id="@+id/texture"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:layout_alignParentTop="true"/>-->
+
+    <!--<Button-->
+        <!--android:id="@+id/btn_takepicture"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:layout_alignParentBottom="true"-->
+        <!--android:layout_centerHorizontal="true"-->
+        <!--android:layout_marginBottom="16dp"-->
+        <!--android:layout_marginTop="16dp"-->
+        <!--android:text="@string/take_picture" />-->
+
+
+    <RelativeLayout
+        android:id="@+id/feedbackContainer"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:layout_above="@id/text_version">
+
+        <include layout="@layout/initial_view"/>
+
+        <include layout="@layout/challenge_view"/>
+
+        <include layout="@layout/loading_view"/>
+
+        <include layout="@layout/result_view"/>
+
+    </RelativeLayout>
+
+    <TextView
+        android:id="@+id/text_version"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
+        android:textColor="#fff"
+        android:text="@string/version"
+        android:textAppearance="@style/TextAppearance.AppCompat.Small"
         android:layout_centerHorizontal="true"
-        android:layout_marginBottom="16dp"
-        android:layout_marginTop="16dp"
-        android:text="@string/take_picture" />
+        android:layout_alignParentBottom="true"/>
+
 </RelativeLayout>
