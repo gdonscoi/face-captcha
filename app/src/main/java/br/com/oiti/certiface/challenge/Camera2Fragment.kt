@@ -23,6 +23,9 @@ import kotlinx.android.synthetic.main.challenge_fragment.*
 import java.util.*
 
 
+/**
+ * @see <a href="https://www.youtube.com/watch?v=Xtp3tH27OFs" />
+ */
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 class Camera2Fragment: AbstractChallengeFragment() {
 
