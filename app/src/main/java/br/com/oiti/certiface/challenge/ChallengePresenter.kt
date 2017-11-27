@@ -36,17 +36,8 @@ class ChallengePresenter(private val view: ChallengeContract.View, endpoint: Str
     fun destroy() {
         repository.destroy()
 
-        stopBackgroundThread()
+        backgroundHandler.removeCallbacksAndMessages(null)
         photos.clear()
-    }
-
-    private fun stopBackgroundThread() {
-        backgroundThread.quit()
-        try {
-            backgroundThread.join()
-        } catch (e: InterruptedException) {
-            e.printStackTrace()
-        }
     }
 
     private fun startChallenges(apiResponse: ChallengeResponse) {

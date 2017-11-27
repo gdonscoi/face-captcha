@@ -20,7 +20,7 @@ class ChallengeRepository(endpoint: String, appKey: String) {
     }
 
     fun destroy() {
-        stopBackgroundThread()
+        backgroundHandler.removeCallbacksAndMessages(null)
     }
 
     fun challenge(params: String, onSuccess: (response: ChallengeResponse) -> Unit) {
@@ -36,14 +36,4 @@ class ChallengeRepository(endpoint: String, appKey: String) {
             onSuccess(response)
         })
     }
-
-    private fun stopBackgroundThread() {
-        backgroundThread.quit()
-        try {
-            backgroundThread.join()
-        } catch (e: InterruptedException) {
-            e.printStackTrace()
-        }
-    }
-
 }
