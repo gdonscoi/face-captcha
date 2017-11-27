@@ -3,6 +3,7 @@ package br.com.oiti.certiface.sample
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.os.StrictMode
 import android.support.v7.app.AppCompatActivity
 import android.widget.Toast
 import br.com.oiti.certiface.challenge.ChallengeActivity
@@ -14,6 +15,8 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        addDevelopmentStrictModes()
 
         startChallenge(this@MainActivity)
 
@@ -42,6 +45,37 @@ class MainActivity : AppCompatActivity() {
 
             Toast.makeText(MainActivity@ this, "Ação cancelada", Toast.LENGTH_LONG).show()
         }
+    }
+
+
+    private fun addDevelopmentStrictModes() {
+
+        if (BuildConfig.DEBUG) {
+            Thread {
+                addStrictModeThreadPolicy()
+                addStrictModeVmPolicy()
+            }.start()
+        }
+
+    }
+
+    private fun addStrictModeThreadPolicy() {
+        StrictMode.setThreadPolicy(
+                StrictMode.ThreadPolicy.Builder()
+                        .detectDiskReads()
+                        .detectDiskWrites()
+                        .detectNetwork()
+                        .penaltyLog()
+                        .build())
+    }
+
+    private fun addStrictModeVmPolicy() {
+        StrictMode.setVmPolicy(StrictMode.VmPolicy.Builder()
+                .detectLeakedSqlLiteObjects()
+                .detectLeakedClosableObjects()
+                .penaltyLog()
+                .penaltyDeath()
+                .build())
     }
 
     companion object {

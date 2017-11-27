@@ -1,17 +1,18 @@
 package br.com.oiti.certiface.challenge
 
 import android.graphics.Bitmap
-import android.hardware.Camera
 
 
-interface CameraContract {
+interface ChallengeContract {
     interface View {
 
         fun initialView()
 
         fun startChallenge()
 
-        fun takePicture(pictureCallback: Camera.PictureCallback)
+        fun buildTakePictureHandler(photos: HashMap<ByteArray, String>, afterTakePicture: (data: ByteArray) -> Unit): Any
+
+        fun takePicture(callback: Any)
 
         fun loadIcon(icon: Bitmap?)
 

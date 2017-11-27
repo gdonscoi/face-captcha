@@ -1,52 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    android:background="@color/grey">
+<android.support.constraint.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
     <FrameLayout
-        android:id="@+id/camera_preview"
+        android:id="@+id/challenge_fragment_container"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_above="@id/feedbackContainer"
-        android:layout_marginLeft="15dp"
-        android:layout_marginRight="15dp"
-        android:layout_marginTop="15dp"
-        android:background="#fff" />
+        android:layout_height="wrap_content" />
 
-    <include layout="@layout/feedback_animation"/>
-
-    <ImageView
-        android:id="@+id/iconField"
-        android:layout_width="60dp"
-        android:layout_height="60dp"
-        android:layout_above="@id/feedbackContainer"
-        android:layout_marginBottom="20dp"
-        android:layout_marginLeft="35dp" />
-
-    <RelativeLayout
-        android:id="@+id/feedbackContainer"
-        android:layout_width="match_parent"
-        android:layout_height="100dp"
-        android:layout_above="@id/text_version">
-
-        <include layout="@layout/initial_view"/>
-
-        <include layout="@layout/challenge_view"/>
-
-        <include layout="@layout/loading_view"/>
-
-        <include layout="@layout/result_view"/>
-
-    </RelativeLayout>
-
-    <TextView
-        android:id="@+id/text_version"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textColor="#fff"
-        android:text="@string/version"
-        android:textAppearance="@style/TextAppearance.AppCompat.Small"
-        android:layout_centerHorizontal="true"
-        android:layout_alignParentBottom="true"/>
-</RelativeLayout>
+</android.support.constraint.ConstraintLayout>

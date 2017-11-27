@@ -1,4 +1,4 @@
-package br.com.oiti.certiface.challenge
+package br.com.oiti.certiface.challenge.camera
 
 import android.content.Context
 import android.hardware.Camera
@@ -8,29 +8,24 @@ import android.view.SurfaceView
 import java.io.IOException
 
 
-class CameraPreview : SurfaceView, SurfaceHolder.Callback {
+class CameraPreview(context: Context?, private val camera: Camera): SurfaceView(context), SurfaceHolder.Callback {
 
-    private var TAG = this.javaClass.name
-    private var mHolder: SurfaceHolder
-    private var mCamera: Camera
+    private var TAG = this::class.java.name
 
-
-    constructor(context: Context?, camera: Camera) : super(context) {
-        mCamera = camera
-
+    init {
         // Install a SurfaceHolder.Callback so we get notified when the
         // underlying surface is created and destroyed.
-        mHolder = holder
-        mHolder.addCallback(this)
+        holder.addCallback(this)
+
         // deprecated setting, but required on Android versions prior to 3.0
-        mHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS)
+        holder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS)
     }
 
     override fun surfaceCreated(holder: SurfaceHolder) {
         // The Surface has been created, now tell the camera where to draw the preview.
         try {
-            mCamera.setPreviewDisplay(holder)
-            mCamera.startPreview()
+            camera.setPreviewDisplay(holder)
+            camera.startPreview()
         } catch (e: IOException) {
             Log.d(TAG, "Error setting camera preview: " + e.message)
         }
@@ -45,14 +40,14 @@ class CameraPreview : SurfaceView, SurfaceHolder.Callback {
         // If your preview can change or rotate, take care of those events here.
         // Make sure to stop the preview before resizing or reformatting it.
 
-        if (mHolder.surface == null) {
+        if (holder.surface == null) {
             // preview surface does not exist
             return
         }
 
         // stop preview before making changes
         try {
-            mCamera.stopPreview()
+            camera.stopPreview()
         } catch (e: Exception) {
             // ignore: tried to stop a non-existent preview
         }
@@ -62,8 +57,8 @@ class CameraPreview : SurfaceView, SurfaceHolder.Callback {
 
         // start preview with new settings
         try {
-            mCamera.setPreviewDisplay(mHolder)
-            mCamera.startPreview()
+            camera.setPreviewDisplay(holder)
+            camera.startPreview()
 
         } catch (e: Exception) {
             Log.d(TAG, "Error starting camera preview: " + e.message)
