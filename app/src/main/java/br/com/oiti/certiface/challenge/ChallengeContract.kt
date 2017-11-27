@@ -1,11 +1,9 @@
 package br.com.oiti.certiface.challenge
 
 import android.graphics.Bitmap
-import android.hardware.Camera
-import android.os.Handler
 
 
-interface CameraContract {
+interface ChallengeContract {
     interface View {
 
         fun initialView()

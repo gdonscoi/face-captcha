@@ -1,4 +1,4 @@
-package br.com.oiti.certiface.challenge
+package br.com.oiti.certiface.challenge.camera
 
 import android.content.Context
 import android.hardware.Camera

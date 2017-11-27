@@ -1,112 +1,62 @@
 package br.com.oiti.certiface.challenge
 
-import android.app.Activity
-import android.graphics.ImageFormat
-import android.hardware.Camera
-import android.view.Surface
-import android.view.View
+import android.os.Bundle
+import android.support.v4.app.ActivityCompat
+import android.support.v4.app.Fragment
+import android.support.v7.app.AppCompatActivity
+import br.com.oiti.certiface.R
 
 
-class ChallengeActivity : AbstractChallengeActivity() {
+class ChallengeActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissionsResultCallback {
 
-    private var camera: Camera? = null
-    private var cameraPreview: CameraPreview? = null
+    private val endpoint by lazy { intent.getStringExtra(PARAM_ENDPOINT) }
+    private val appKey by lazy { intent.getStringExtra(PARAM_APP_KEY) }
+    private val userParams by lazy { intent.getStringExtra(PARAM_USER_INFO) }
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_challenge)
 
-    override fun getCameraPreview(): View? = cameraPreview
+        val fragment = getFragment()
+        fragment.arguments = buildBundle()
 
-    override fun onResume() {
-        super.onResume()
+        startFragment(R.id.challenge_fragment_container, fragment)
+    }
 
-        if (hasCameraRequirements()) {
-            camera = openFrontFacingCamera()
+    override fun onBackPressed() {
+        setResult(RESULT_CANCELED)
+        super.onBackPressed()
+    }
 
-            // Create our Preview view and set it as the content of our activity.
-            cameraPreview = CameraPreview(this, camera!!)
-
-            preview.addView(cameraPreview)
+    private fun getFragment(): AbstractChallengeFragment {
+        return if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            Camera2Fragment()
+        } else {
+            CameraFragment()
         }
     }
 
-    override fun buildTakePictureHandler(photos: HashMap<ByteArray, String>, afterTakePicture: (data: ByteArray) -> Unit): Any {
-        val callback = Camera.PictureCallback { data, camera ->
-            afterTakePicture(data)
-            camera.startPreview()
-        }
+    private fun buildBundle(): Bundle {
+        val bundle = Bundle()
 
-        return callback
+        bundle.putString(PARAM_ENDPOINT, endpoint)
+        bundle.putString(PARAM_APP_KEY, appKey)
+        bundle.putString(PARAM_USER_INFO, userParams)
+
+        return bundle
     }
 
-
-    override fun takePicture(callback: Any) {
-        camera?.takePicture(null, null, callback as Camera.PictureCallback)
+    private fun startFragment(containerViewId: Int, fragment: Fragment) {
+        supportFragmentManager.beginTransaction()
+                .add(containerViewId, fragment)
+                .commit()
     }
 
-    override fun getFrontFacingCameraId(): String? {
-        var count = Camera.getNumberOfCameras()
-        val info = Camera.CameraInfo()
-
-        (0..count).forEach({ id ->
-            Camera.getCameraInfo(id, info)
-            if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
-                return id.toString()
-            }
-        })
-        return null
+    companion object Params {
+        val PARAM_APP_KEY = "app_key"
+        val PARAM_ENDPOINT = "endpoint"
+        val PARAM_USER_INFO = "user_info"
+        val PARAM_ACTIVITY_RESULT = "certiface_result"
     }
 
-
-    override fun releaseCamera() {
-        camera?.release()
-        camera = null
-    }
-
-    private fun openFrontFacingCamera(): Camera? {
-        var cam: Camera? = null
-
-        getFrontFacingCameraId()?.let { camId ->
-            Camera.open(camId.toInt()).let {
-                cam = it
-                setCameraDisplayOrientation(this@ChallengeActivity, camId.toInt(), it)
-                setCameraParameters(it)
-            }
-        }
-
-        return cam
-    }
-
-    private fun setCameraParameters(camera: Camera) {
-        val parameters = camera.parameters
-        val lowerSupportedPictureSize = parameters.supportedPictureSizes.last()
-
-        parameters.pictureFormat = ImageFormat.JPEG
-        parameters.setPictureSize(lowerSupportedPictureSize.width, lowerSupportedPictureSize.height)
-
-        camera.parameters = parameters
-    }
-
-    /**
-     * @see Camera.setDisplayOrientation() comments
-     */
-    private fun setCameraDisplayOrientation(activity: Activity, cameraId: Int, camera: android.hardware.Camera) {
-
-        val rotation = activity.windowManager.defaultDisplay.rotation
-
-        var degrees = 0
-
-        when (rotation) {
-            Surface.ROTATION_0 -> degrees = 0
-            Surface.ROTATION_90 -> degrees = 90
-            Surface.ROTATION_180 -> degrees = 180
-            Surface.ROTATION_270 -> degrees = 270
-        }
-
-        val info = Camera.CameraInfo()
-        Camera.getCameraInfo(cameraId, info)
-
-        var result = (info.orientation + degrees) % 360
-        result = (360 - result) % 360  // compensate the mirror
-
-        camera.setDisplayOrientation(result)
-    }
 }

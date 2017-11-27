@@ -7,46 +7,46 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.support.v4.app.ActivityCompat
+import android.support.v4.app.Fragment
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.View
-import android.widget.*
+import android.view.ViewGroup
+import android.widget.Toast
 import br.com.oiti.certiface.R
+import kotlinx.android.synthetic.main.challenge_fragment.*
+import kotlinx.android.synthetic.main.challenge_view.*
+import kotlinx.android.synthetic.main.feedback_animation.*
+import kotlinx.android.synthetic.main.initial_view.*
+import kotlinx.android.synthetic.main.loading_view.*
+import kotlinx.android.synthetic.main.result_view.*
 
+/**
+ * Created by bzumpano on 26/11/17.
+ */
+abstract class AbstractChallengeFragment: Fragment(), ChallengeContract.View {
 
-abstract class AbstractChallengeActivity: AppCompatActivity(), ActivityCompat.OnRequestPermissionsResultCallback, CameraContract.View {
+    private lateinit var endpoint: String
+    private lateinit var appKey: String
+    private lateinit var userParams: String
 
-    private lateinit var presenter: CameraPresenter
-
-    private val endpoint by lazy { intent.getStringExtra(PARAM_ENDPOINT) }
-    private val appKey by lazy { intent.getStringExtra(PARAM_APP_KEY) }
-    private val userParams by lazy { intent.getStringExtra(PARAM_USER_INFO) }
-
-
-    private val initialContainer by lazy { findViewById<RelativeLayout>(R.id.initialContainer) }
-    private val loadingContainer by lazy { findViewById<RelativeLayout>(R.id.loadingContainer) }
-    private val feedbackAnimationContainer by lazy { findViewById<RelativeLayout>(R.id.feedbackAnimationContainer) }
-    private val resultContainer by lazy { findViewById<RelativeLayout>(R.id.resultContainer) }
-    private val challengeContainer by lazy { findViewById<RelativeLayout>(R.id.challengeContainer) }
-
-    private val buttonStart by lazy { findViewById<Button>(R.id.button_start) }
-    private val textAnimation by lazy { findViewById<TextView>(R.id.textAnimation) }
-    private val textResult by lazy { findViewById<TextView>(R.id.textResult) }
-    private val messageField by lazy { findViewById<ImageView>(R.id.messageField) }
-    private val counterField by lazy { findViewById<TextView>(R.id.counterField) }
-    private val iconField by lazy { findViewById<ImageView>(R.id.iconField) }
-
-
-    protected val preview by lazy { findViewById<FrameLayout>(R.id.camera_preview)!! }
-
+    private lateinit var presenter: ChallengePresenter
 
     abstract fun getFrontFacingCameraId(): String?
     abstract fun releaseCamera()
     abstract fun getCameraPreview(): View?
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_challenge)
+    override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+        endpoint = arguments.getString(ChallengeActivity.PARAM_ENDPOINT)
+        appKey = arguments.getString(ChallengeActivity.PARAM_APP_KEY)
+        userParams = arguments.getString(ChallengeActivity.PARAM_USER_INFO)
+
+        return inflater!!.inflate(R.layout.challenge_fragment, container, false)
+    }
+
+    override fun onViewCreated(view: View?, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
         buttonStart.setOnClickListener { presenter.start(userParams) }
     }
@@ -54,7 +54,7 @@ abstract class AbstractChallengeActivity: AppCompatActivity(), ActivityCompat.On
     override fun onResume() {
         super.onResume()
 
-        presenter = CameraPresenter(this@AbstractChallengeActivity, endpoint, appKey)
+        presenter = ChallengePresenter(this@AbstractChallengeFragment, endpoint, appKey)
         initialView()
     }
 
@@ -63,12 +63,7 @@ abstract class AbstractChallengeActivity: AppCompatActivity(), ActivityCompat.On
         presenter.destroy()
         releaseCamera()
 
-        preview.removeView(getCameraPreview())
-    }
-
-    override fun onBackPressed() {
-        setResult(RESULT_CANCELED)
-        super.onBackPressed()
+        cameraFrameLayout.removeView(getCameraPreview())
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
@@ -76,11 +71,10 @@ abstract class AbstractChallengeActivity: AppCompatActivity(), ActivityCompat.On
             if (grantResults[0] == PackageManager.PERMISSION_DENIED) {
                 // close the app
                 printToast("Sorry!!!, you can't use this app without granting permission")
-                finish()
+                activity.finish()
             }
         }
     }
-
 
     override fun initialView() {
         runOnUiThread {
@@ -126,15 +120,6 @@ abstract class AbstractChallengeActivity: AppCompatActivity(), ActivityCompat.On
         }
     }
 
-    override fun finishChallenge(valid: Boolean) {
-        val data = Intent()
-
-        data.putExtra(PARAM_ACTIVITY_RESULT, valid)
-        setResult(RESULT_OK, data)
-
-        finish()
-    }
-
     override fun animationFeedback(visibility: Int, message: String) {
         runOnUiThread {
             visibilityChallengeContainer(View.GONE)
@@ -143,29 +128,23 @@ abstract class AbstractChallengeActivity: AppCompatActivity(), ActivityCompat.On
         }
     }
 
+    override fun finishChallenge(valid: Boolean) {
+        val data = Intent()
 
-    protected fun hasCameraRequirements(): Boolean {
+        data.putExtra(ChallengeActivity.PARAM_ACTIVITY_RESULT, valid)
 
-
-        if (!checkFrontalCameraHardware(applicationContext)) {
-            Log.d(TAG, "Frontal camera not detected. ")
-            return false
-        }
-
-        return hasCameraPermissions()
+        activity.setResult(AppCompatActivity.RESULT_OK, data)
+        activity.finish()
     }
 
-    protected fun printToast(text: String, e: Throwable? = null) {
-        val context = applicationContext
-        val duration = Toast.LENGTH_SHORT
-
-        val toast = Toast.makeText(context, text, duration)
-        toast.show()
-
-        e?.let { Log.d(TAG, text + ": " + e.message, e) }
+    private fun runOnUiThread(action: () -> Unit) {
+        activity.runOnUiThread(action)
     }
 
-
+    private fun visibilityChallengeContainer(visibility: Int) {
+        challengeContainer.visibility = visibility
+        iconField.visibility = visibility
+    }
 
     private fun visibilityAnimationFeedback(visibility: Int, message: String) {
         feedbackAnimationContainer.visibility = visibility
@@ -174,9 +153,24 @@ abstract class AbstractChallengeActivity: AppCompatActivity(), ActivityCompat.On
         textResult.text = message
     }
 
-    private fun visibilityChallengeContainer(visibility: Int) {
-        challengeContainer.visibility = visibility
-        iconField.visibility = visibility
+    protected fun hasCameraRequirements(): Boolean {
+
+        if (!checkFrontalCameraHardware(activity)) {
+            Log.d(TAG, "Frontal camera not detected. ")
+            return false
+        }
+
+        return hasCameraPermissions()
+    }
+
+    private fun printToast(text: String, e: Throwable? = null) {
+        val context = activity
+        val duration = Toast.LENGTH_SHORT
+
+        val toast = Toast.makeText(context, text, duration)
+        toast.show()
+
+        e?.let { Log.d(TAG, text + ": " + e.message, e) }
     }
 
     /** Check if this device has a frontal camera  */
@@ -186,9 +180,9 @@ abstract class AbstractChallengeActivity: AppCompatActivity(), ActivityCompat.On
     private fun hasCameraPermissions(): Boolean {
         // Add permission for camera and let user grant the permission
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M &&
-                ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+                ActivityCompat.checkSelfPermission(activity, Manifest.permission.CAMERA)
                         != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA), REQUEST_CAMERA_PERMISSION)
+            ActivityCompat.requestPermissions(activity, arrayOf(Manifest.permission.CAMERA), REQUEST_CAMERA_PERMISSION)
             return false
         }
 
@@ -198,16 +192,10 @@ abstract class AbstractChallengeActivity: AppCompatActivity(), ActivityCompat.On
 
     companion object {
 
-        val PARAM_APP_KEY = "app_key"
-        val PARAM_ENDPOINT = "endpoint"
-        val PARAM_USER_INFO = "user_info"
-        val PARAM_ACTIVITY_RESULT = "certiface_result"
-
         @JvmStatic
         protected val TAG = this::class.java.name!!
 
         @JvmStatic
         protected val REQUEST_CAMERA_PERMISSION = 200
     }
-
 }

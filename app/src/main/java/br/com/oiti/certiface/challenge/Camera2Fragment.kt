@@ -10,26 +10,27 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.HandlerThread
 import android.support.annotation.RequiresApi
-import android.util.Log
 import android.util.Size
 import android.util.SparseIntArray
 import android.view.Surface
 import android.view.TextureView
 import android.view.View
-import br.com.oiti.certiface.challenge.camera2.*
+import br.com.oiti.certiface.challenge.camera2.CameraCaptureSessionStateCallback
+import br.com.oiti.certiface.challenge.camera2.CameraDeviceStateCallback
+import br.com.oiti.certiface.challenge.camera2.ImageReaderListener
+import br.com.oiti.certiface.challenge.camera2.TextureListener
+import kotlinx.android.synthetic.main.challenge_fragment.*
 import java.util.*
 
 
-/**
- * @see <a href="https://inducesmile.com/android/android-camera2-api-example-tutorial/" />
- */
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-class Camera2Activity : AbstractChallengeActivity() {
+class Camera2Fragment: AbstractChallengeFragment() {
 
-    private val cameraPreview by lazy { TextureView(this@Camera2Activity) }
+    private val backgroundHandler: Handler
+    private val backgroundThread: HandlerThread
 
-    private val mBackgroundHandler: Handler
-    private val mBackgroundThread: HandlerThread
+    private val cameraPreview by lazy { TextureView(activity) }
+    private val cameraManager by lazy { activity.getSystemService(Context.CAMERA_SERVICE) as CameraManager }
 
     private var cameraId: String? = null
     private var cameraDevice: CameraDevice? = null
@@ -56,10 +57,11 @@ class Camera2Activity : AbstractChallengeActivity() {
                 cameraDevice = null
             })
 
+
     override fun getCameraPreview(): View? = cameraPreview
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+    override fun onViewCreated(view: View?, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
         cameraPreview.surfaceTextureListener = textureListener
     }
@@ -68,7 +70,7 @@ class Camera2Activity : AbstractChallengeActivity() {
         super.onResume()
 
         if (hasCameraRequirements()) {
-            preview.addView(cameraPreview)
+            cameraFrameLayout.addView(cameraPreview)
 
             if (cameraPreview.isAvailable) {
                 openFrontFacingCamera()
@@ -81,7 +83,6 @@ class Camera2Activity : AbstractChallengeActivity() {
     override fun buildTakePictureHandler(photos: HashMap<ByteArray, String>, afterTakePicture: (data: ByteArray) -> Unit): Any {
         val handler = ImageReaderListener({
             it.acquireLatestImage().use { image ->
-                Log.d(TAG, "Callback invoked at " + Date().time)
                 val buffer = image.planes[0].buffer
                 val data = ByteArray(buffer.capacity())
 
@@ -97,17 +98,14 @@ class Camera2Activity : AbstractChallengeActivity() {
     override fun takePicture(callback: Any) {
         val handler = callback as ImageReaderListener
 
-        reader?.setOnImageAvailableListener(handler, mBackgroundHandler)
+        reader?.setOnImageAvailableListener(handler, backgroundHandler)
 
         cameraCaptureSession?.capture(captureRequestBuilder!!.build(), null, null)
     }
 
     override fun getFrontFacingCameraId(): String? {
-
-        val manager = getSystemService(Context.CAMERA_SERVICE) as CameraManager
-
-        manager.cameraIdList.forEach {
-            val characteristics = manager.getCameraCharacteristics(it)
+        cameraManager.cameraIdList.forEach {
+            val characteristics = cameraManager.getCameraCharacteristics(it)
             val facing = characteristics.get(CameraCharacteristics.LENS_FACING)
             if (facing == CameraCharacteristics.LENS_FACING_FRONT) {
                 return it
@@ -122,11 +120,9 @@ class Camera2Activity : AbstractChallengeActivity() {
     }
 
     private fun stopBackgroundThread() {
-        mBackgroundThread.quitSafely()
+        backgroundThread.quitSafely()
         try {
-            mBackgroundThread.join()
-//            mBackgroundThread = null
-//            mBackgroundHandler = null
+            backgroundThread.join()
         } catch (e: InterruptedException) {
             e.printStackTrace()
         }
@@ -137,8 +133,7 @@ class Camera2Activity : AbstractChallengeActivity() {
 
         val cameraCaptureSessionStateCallback = CameraCaptureSessionStateCallback({ session ->
             cameraDevice?.let {
-                // When the session is ready, we start displaying the preview.
-                this@Camera2Activity.cameraCaptureSession = session
+                this@Camera2Fragment.cameraCaptureSession = session
                 updatePreview()
             }
         })
@@ -164,10 +159,8 @@ class Camera2Activity : AbstractChallengeActivity() {
 
     @SuppressLint("MissingPermission")
     private fun openFrontFacingCamera() {
-        val manager = getSystemService(Context.CAMERA_SERVICE) as CameraManager
-
         cameraId = getFrontFacingCameraId()
-        val characteristics = manager.getCameraCharacteristics(cameraId)
+        val characteristics = cameraManager.getCameraCharacteristics(cameraId)
         val map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
 
 //        imageSize = map.getOutputSizes(SurfaceTexture::class.java)[0]
@@ -177,12 +170,12 @@ class Camera2Activity : AbstractChallengeActivity() {
             captureSurface = reader!!.surface
         }
 
-        manager.openCamera(cameraId, stateCallback, null)
+        cameraManager.openCamera(cameraId, stateCallback, null)
     }
 
     private fun updatePreview() {
         previewRequestBuilder?.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO)
-        cameraCaptureSession?.setRepeatingRequest(previewRequestBuilder!!.build(), null, mBackgroundHandler)
+        cameraCaptureSession?.setRepeatingRequest(previewRequestBuilder!!.build(), null, backgroundHandler)
     }
 
     init {
@@ -191,13 +184,12 @@ class Camera2Activity : AbstractChallengeActivity() {
         ORIENTATIONS.append(Surface.ROTATION_180, 270)
         ORIENTATIONS.append(Surface.ROTATION_270, 180)
 
-        mBackgroundThread = HandlerThread("Camera Background")
-        mBackgroundThread.start()
-        mBackgroundHandler = Handler(mBackgroundThread.looper)
+        backgroundThread = HandlerThread(this::javaClass.name)
+        backgroundThread.start()
+        backgroundHandler = Handler(backgroundThread.looper)
     }
 
     companion object {
         private val ORIENTATIONS = SparseIntArray()
     }
-
 }
