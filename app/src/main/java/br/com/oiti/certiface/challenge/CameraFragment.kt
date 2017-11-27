@@ -9,7 +9,7 @@ import br.com.oiti.certiface.challenge.camera.CameraPreview
 import kotlinx.android.synthetic.main.challenge_fragment.*
 
 /**
- * Created by bzumpano on 27/11/17.
+ * Uses old camera api
  */
 class CameraFragment : AbstractChallengeFragment() {
 

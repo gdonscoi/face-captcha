@@ -24,6 +24,8 @@ import java.util.*
 
 
 /**
+ * Uses new camera2 api
+ *
  * @see <a href="https://www.youtube.com/watch?v=Xtp3tH27OFs" />
  */
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
