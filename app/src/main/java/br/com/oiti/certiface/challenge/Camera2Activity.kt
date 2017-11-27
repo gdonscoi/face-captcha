@@ -3,7 +3,6 @@ package br.com.oiti.certiface.challenge
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.ImageFormat
-import android.graphics.SurfaceTexture
 import android.hardware.camera2.*
 import android.media.ImageReader
 import android.os.Build
@@ -34,9 +33,15 @@ class Camera2Activity : AbstractChallengeActivity() {
 
     private var cameraId: String? = null
     private var cameraDevice: CameraDevice? = null
+    private var imageSize: Size? = null
+
+    private var previewRequestBuilder: CaptureRequest.Builder? = null
     private var captureRequestBuilder: CaptureRequest.Builder? = null
-    private var cameraCaptureSessions: CameraCaptureSession? = null
-    private var imageDimension: Size? = null
+    private var cameraCaptureSession: CameraCaptureSession? = null
+    private var reader: ImageReader? = null
+
+    private var captureSurface: Surface? = null
+    private var previewSurface: Surface? = null
 
     private val textureListener = TextureListener({ openFrontFacingCamera() })
 
@@ -73,42 +78,28 @@ class Camera2Activity : AbstractChallengeActivity() {
         }
     }
 
-    override fun buildTakePictureCallback(photos: HashMap<ByteArray, String>, afterTakePicture: (data: ByteArray) -> Unit): Any {
-        val callback = ImageReaderListener({
+    override fun buildTakePictureHandler(photos: HashMap<ByteArray, String>, afterTakePicture: (data: ByteArray) -> Unit): Any {
+        val handler = ImageReaderListener({
             it.acquireLatestImage().use { image ->
                 Log.d(TAG, "Callback invoked at " + Date().time)
                 val buffer = image.planes[0].buffer
                 val data = ByteArray(buffer.capacity())
 
                 buffer.get(data)
+                image.close()
                 afterTakePicture(data)
             }
         })
 
-        return callback
+        return handler
     }
 
     override fun takePicture(callback: Any) {
-        val imageReaderListener = callback as ImageReaderListener
-        val reader = getImageReader()
-        val outputSurfaces = ArrayList<Surface>()
-        outputSurfaces.add(reader.surface)
-        outputSurfaces.add(Surface(cameraPreview.surfaceTexture))
+        val handler = callback as ImageReaderListener
 
-        val captureBuilder = cameraDevice!!.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE)
-        captureBuilder.addTarget(reader.surface)
-        captureBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO)
+        reader?.setOnImageAvailableListener(handler, mBackgroundHandler)
 
-        // Orientation
-        val rotation = windowManager.defaultDisplay.rotation
-        captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, ORIENTATIONS.get(rotation))
-
-        reader.setOnImageAvailableListener(imageReaderListener, mBackgroundHandler)
-
-        val imageCaptureListener = CameraCaptureSessionCaptureCallback({_, _ -> createCameraPreview() })
-        val captureSessionStateCallback = CameraCaptureSessionStateCallback({ it.capture(captureBuilder.build(), imageCaptureListener, mBackgroundHandler) })
-
-        cameraDevice!!.createCaptureSession(outputSurfaces, captureSessionStateCallback, mBackgroundHandler)
+        cameraCaptureSession?.capture(captureRequestBuilder!!.build(), null, null)
     }
 
     override fun getFrontFacingCameraId(): String? {
@@ -141,50 +132,34 @@ class Camera2Activity : AbstractChallengeActivity() {
         }
     }
 
-    private fun getImageReader(): ImageReader {
-        val manager = getSystemService(Context.CAMERA_SERVICE) as CameraManager
-        val characteristics = manager.getCameraCharacteristics(cameraDevice!!.id)
-        var jpegSizes: Array<Size>? = null
-        var width = 640
-        var height = 480
+    private fun createCameraPreview() {
+        setupHandlers()
 
-        characteristics?.let {
-            jpegSizes = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP).getOutputSizes(ImageFormat.JPEG)
-        }
+        val cameraCaptureSessionStateCallback = CameraCaptureSessionStateCallback({ session ->
+            cameraDevice?.let {
+                // When the session is ready, we start displaying the preview.
+                this@Camera2Activity.cameraCaptureSession = session
+                updatePreview()
+            }
+        })
 
-        if (jpegSizes?.isNotEmpty() == true) {
-            width = jpegSizes!![0].width
-            height = jpegSizes!![0].height
-        }
-
-//        return ImageReader.newInstance(width, height, ImageFormat.JPEG, 1)
-        return ImageReader.newInstance(imageDimension!!.width, imageDimension!!.height, ImageFormat.JPEG, 1)
+        cameraDevice!!.createCaptureSession(Arrays.asList(previewSurface, captureSurface), cameraCaptureSessionStateCallback, null)
     }
 
-    private fun createCameraPreview() {
-        val texture = cameraPreview.surfaceTexture
+    private fun setupHandlers() {
+        cameraDevice?.let {
+            val texture = cameraPreview.surfaceTexture
+            texture.setDefaultBufferSize(imageSize!!.width, imageSize!!.height)
 
-        texture.setDefaultBufferSize(imageDimension!!.width, imageDimension!!.height)
-        val surface = Surface(texture)
-        captureRequestBuilder = cameraDevice!!.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
-        captureRequestBuilder!!.addTarget(surface)
+            previewSurface = Surface(texture)
 
-        val cameraCaptureSessionStateCallback = object: CameraCaptureSession.StateCallback(){
+            previewRequestBuilder = it.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
+            previewRequestBuilder!!.addTarget(previewSurface)
 
-            override fun onConfigured(cameraCaptureSession: CameraCaptureSession) {
-                cameraDevice?.let {
-                    // When the session is ready, we start displaying the preview.
-                    cameraCaptureSessions = cameraCaptureSession
-                    updatePreview()
-                }
-            }
-
-            override fun onConfigureFailed(cameraCaptureSession: CameraCaptureSession) {
-                printToast("Configuration change")
-            }
+            captureSurface = reader?.surface
+            captureRequestBuilder = it.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE)
+            captureRequestBuilder!!.addTarget(captureSurface)
         }
-
-        cameraDevice!!.createCaptureSession(Arrays.asList(surface), cameraCaptureSessionStateCallback, null)
     }
 
     @SuppressLint("MissingPermission")
@@ -193,16 +168,21 @@ class Camera2Activity : AbstractChallengeActivity() {
 
         cameraId = getFrontFacingCameraId()
         val characteristics = manager.getCameraCharacteristics(cameraId)
-        val map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)!!
+        val map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
 
-        imageDimension = map.getOutputSizes(SurfaceTexture::class.java)[0]
+//        imageSize = map.getOutputSizes(SurfaceTexture::class.java)[0]
+        map.getOutputSizes(ImageFormat.JPEG)[0]?.let {
+            imageSize = it
+            reader = ImageReader.newInstance(it.width, it.height, ImageFormat.JPEG, 1)
+            captureSurface = reader!!.surface
+        }
 
         manager.openCamera(cameraId, stateCallback, null)
     }
 
     private fun updatePreview() {
-        captureRequestBuilder?.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO)
-        cameraCaptureSessions?.setRepeatingRequest(captureRequestBuilder!!.build(), null, mBackgroundHandler)
+        previewRequestBuilder?.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO)
+        cameraCaptureSession?.setRepeatingRequest(previewRequestBuilder!!.build(), null, mBackgroundHandler)
     }
 
     init {

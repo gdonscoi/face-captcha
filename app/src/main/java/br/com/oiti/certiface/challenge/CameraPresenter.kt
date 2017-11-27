@@ -105,7 +105,7 @@ class CameraPresenter(private val view: CameraContract.View, endpoint: String, a
         val challengeDurationInMillis = challenge.tempoEmSegundos * 1000
         val numberOfPictures = challengeDurationInMillis / snapFrequenceInMillis
 
-        val callback = view.buildTakePictureCallback(photos, afterTakePicture)
+        val callback = view.buildTakePictureHandler(photos, afterTakePicture)
 
         // Agenda para alterar icone e imagem do desafio
         handler.postAtTime({ loadChallenge(challenge) }, getPostAtTime(startAt))

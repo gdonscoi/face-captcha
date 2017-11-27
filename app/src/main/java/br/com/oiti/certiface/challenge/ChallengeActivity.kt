@@ -28,7 +28,7 @@ class ChallengeActivity : AbstractChallengeActivity() {
         }
     }
 
-    override fun buildTakePictureCallback(photos: HashMap<ByteArray, String>, afterTakePicture: (data: ByteArray) -> Unit): Any {
+    override fun buildTakePictureHandler(photos: HashMap<ByteArray, String>, afterTakePicture: (data: ByteArray) -> Unit): Any {
         val callback = Camera.PictureCallback { data, camera ->
             afterTakePicture(data)
             camera.startPreview()

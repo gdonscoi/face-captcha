@@ -12,7 +12,7 @@ interface CameraContract {
 
         fun startChallenge()
 
-        fun buildTakePictureCallback(photos: HashMap<ByteArray, String>, afterTakePicture: (data: ByteArray) -> Unit): Any
+        fun buildTakePictureHandler(photos: HashMap<ByteArray, String>, afterTakePicture: (data: ByteArray) -> Unit): Any
 
         fun takePicture(callback: Any)
 
