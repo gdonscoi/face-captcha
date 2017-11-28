@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Handler
 import android.os.SystemClock
+import android.util.Log
 import android.view.View
 import br.com.oiti.certiface.data.model.challenge.ChallengeDataResponse
 import br.com.oiti.certiface.data.model.challenge.ChallengeResponse
@@ -124,10 +125,10 @@ class ChallengePresenter(private val backgroundHandler: Handler, private val vie
 
             if (captchaResponse.valid) {
                 messageAnimation = "Sucesso na autenticação"
-                post({ view.finishChallenge(captchaResponse.valid) })
+                postDelayed({ view.finishChallenge(captchaResponse.valid) })
             } else {
                 messageAnimation = "Erro na autenticação"
-                post({ view.initialView() })
+                postDelayed({ view.initialView() })
             }
 
             view.animationFeedback(View.VISIBLE, messageAnimation)
@@ -143,9 +144,9 @@ class ChallengePresenter(private val backgroundHandler: Handler, private val vie
         return bos.toByteArray()
     }
 
-    private fun post(action: () -> Unit) {
+    private fun postDelayed(action: () -> Unit, delay: Long = 2500) {
         try {
-            backgroundHandler.post({ action() })
+            backgroundHandler.postDelayed({ action() }, delay)
         } catch (e: IllegalStateException){}
     }
 }
