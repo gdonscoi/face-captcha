@@ -158,15 +158,10 @@ class ChallengePresenter(private val view: ChallengeContract.View, endpoint: Str
     }
 
     private fun reduceImage(byteImage: ByteArray): ByteArray {
-        val options = BitmapFactory.Options()
-        options.inPreferredConfig = Bitmap.Config.ALPHA_8
-        options.inTargetDensity = 72
-        options.inDensity = 72
-
-        val image = BitmapFactory.decodeByteArray(byteImage, 0, byteImage.size, options)
+        val image = BitmapFactory.decodeByteArray(byteImage, 0, byteImage.size)
         val bos = ByteArrayOutputStream()
 
-        image.compress(Bitmap.CompressFormat.JPEG, 100, bos)
+        image.compress(Bitmap.CompressFormat.JPEG, 95, bos)
 
         return bos.toByteArray()
     }

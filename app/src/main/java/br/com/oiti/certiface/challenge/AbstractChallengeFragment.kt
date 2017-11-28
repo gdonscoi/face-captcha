@@ -1,16 +1,19 @@
 package br.com.oiti.certiface.challenge
 
 import android.Manifest
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.graphics.ImageFormat
 import android.os.Bundle
 import android.support.v4.app.ActivityCompat
 import android.support.v4.app.Fragment
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.Surface
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
@@ -163,6 +166,19 @@ abstract class AbstractChallengeFragment: Fragment(), ChallengeContract.View {
         return hasCameraPermissions()
     }
 
+    protected fun getRotation(activity: Activity): Int? {
+        val rotation = activity.windowManager.defaultDisplay.rotation
+
+        // Como usamos a camera frontal, os valores são invertidos
+        return when (rotation) {
+            Surface.ROTATION_0 -> 270
+            Surface.ROTATION_90 -> 180
+            Surface.ROTATION_180 -> 90
+            Surface.ROTATION_270 -> 0
+            else -> null
+        }
+    }
+
     private fun printToast(text: String, e: Throwable? = null) {
         val context = activity
         val duration = Toast.LENGTH_SHORT
@@ -191,6 +207,14 @@ abstract class AbstractChallengeFragment: Fragment(), ChallengeContract.View {
 
 
     companion object {
+        @JvmStatic
+        protected val IMAGE_FORMAT = ImageFormat.JPEG
+
+        @JvmStatic
+        protected val IMAGE_WIDTH = 320
+
+        @JvmStatic
+        protected val IMAGE_HEIGHT = 480
 
         @JvmStatic
         protected val TAG = this::class.java.name!!
