@@ -12,7 +12,7 @@ class TextureListener(private val onSurfaceTextureAvailableCallback: () -> Unit)
     override fun onSurfaceTextureSizeChanged(surface: SurfaceTexture, width: Int, height: Int) {
     }
 
-    override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean = false
+    override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean = true
 
     override fun onSurfaceTextureUpdated(surface: SurfaceTexture) {
     }

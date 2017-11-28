@@ -8,6 +8,8 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.ImageFormat
 import android.os.Bundle
+import android.os.Handler
+import android.os.HandlerThread
 import android.support.v4.app.ActivityCompat
 import android.support.v4.app.Fragment
 import android.support.v7.app.AppCompatActivity
@@ -25,16 +27,17 @@ import kotlinx.android.synthetic.main.initial_view.*
 import kotlinx.android.synthetic.main.loading_view.*
 import kotlinx.android.synthetic.main.result_view.*
 
-/**
- * Created by bzumpano on 26/11/17.
- */
+
 abstract class AbstractChallengeFragment: Fragment(), ChallengeContract.View {
+
+    protected var backgroundHandler: Handler? = null
+    private var backgroundThread: HandlerThread? = null
 
     private lateinit var endpoint: String
     private lateinit var appKey: String
     private lateinit var userParams: String
 
-    private lateinit var presenter: ChallengePresenter
+    private var presenter: ChallengePresenter? = null
 
     abstract fun getFrontFacingCameraId(): String?
     abstract fun releaseCamera()
@@ -51,22 +54,26 @@ abstract class AbstractChallengeFragment: Fragment(), ChallengeContract.View {
     override fun onViewCreated(view: View?, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        buttonStart.setOnClickListener { presenter.start(userParams) }
+        buttonStart.setOnClickListener { presenter!!.start(userParams) }
     }
 
     override fun onResume() {
         super.onResume()
 
-        presenter = ChallengePresenter(this@AbstractChallengeFragment, endpoint, appKey)
+        startBackgroundThread()
+
+        presenter = ChallengePresenter(backgroundHandler!!, this@AbstractChallengeFragment, endpoint, appKey)
         initialView()
     }
 
     override fun onPause() {
         super.onPause()
-        presenter.destroy()
-        releaseCamera()
 
+        releaseCamera()
         cameraFrameLayout.removeView(getCameraPreview())
+        stopBackgroundThread()
+
+        presenter = null
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
@@ -138,6 +145,30 @@ abstract class AbstractChallengeFragment: Fragment(), ChallengeContract.View {
 
         activity.setResult(AppCompatActivity.RESULT_OK, data)
         activity.finish()
+    }
+
+    private fun stopBackgroundThread() {
+        backgroundHandler?.removeCallbacksAndMessages(null)
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            backgroundThread?.quitSafely()
+        } else {
+            backgroundThread?.quit()
+        }
+
+        try {
+            backgroundThread?.join()
+            backgroundThread = null
+            backgroundHandler = null
+        } catch (e: InterruptedException) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun startBackgroundThread() {
+        backgroundThread = HandlerThread(this::class.java.simpleName)
+        backgroundThread!!.start()
+        backgroundHandler = Handler(backgroundThread!!.looper)
     }
 
     private fun runOnUiThread(action: () -> Unit) {
@@ -217,7 +248,7 @@ abstract class AbstractChallengeFragment: Fragment(), ChallengeContract.View {
         protected val IMAGE_HEIGHT = 480
 
         @JvmStatic
-        protected val TAG = this::class.java.name!!
+        protected val TAG = this::class.java.simpleName!!
 
         @JvmStatic
         protected val REQUEST_CAMERA_PERMISSION = 200

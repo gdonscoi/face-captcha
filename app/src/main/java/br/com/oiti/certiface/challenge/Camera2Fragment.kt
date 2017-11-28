@@ -6,8 +6,6 @@ import android.hardware.camera2.*
 import android.media.ImageReader
 import android.os.Build
 import android.os.Bundle
-import android.os.Handler
-import android.os.HandlerThread
 import android.support.annotation.RequiresApi
 import android.util.Size
 import android.view.Surface
@@ -29,9 +27,6 @@ import java.util.*
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
 class Camera2Fragment: AbstractChallengeFragment() {
 
-    private val backgroundHandler: Handler
-    private val backgroundThread: HandlerThread = HandlerThread(this::javaClass.name)
-
     private val cameraPreview by lazy { TextureView(activity) }
     private val cameraManager by lazy { activity.getSystemService(Context.CAMERA_SERVICE) as CameraManager }
 
@@ -42,23 +37,16 @@ class Camera2Fragment: AbstractChallengeFragment() {
     private var captureRequestBuilder: CaptureRequest.Builder? = null
     private var cameraCaptureSession: CameraCaptureSession? = null
 
-    private val reader = ImageReader.newInstance(IMAGE_WIDTH, IMAGE_HEIGHT, IMAGE_FORMAT, 1)
-
-    private val captureSurface = reader.surface
+    private lateinit var reader: ImageReader
+    private lateinit var captureSurface: Surface
     private var previewSurface: Surface? = null
 
     private val textureListener = TextureListener({ openFrontFacingCamera() })
 
     private val stateCallback = CameraDeviceStateCallback(
-            {camera ->
-                cameraDevice = camera
-                createCameraPreview()
-            },
-            { cameraDevice?.close() },
-            {_, _ ->
-                cameraDevice?.close()
-                cameraDevice = null
-            })
+            { startCameraDevice(it!!) },
+            { stopCameraDevice() },
+            {_, _ -> stopCameraDevice() })
 
 
     override fun getCameraPreview(): View? = cameraPreview
@@ -71,6 +59,7 @@ class Camera2Fragment: AbstractChallengeFragment() {
 
     override fun onResume() {
         super.onResume()
+        initPreviewComponents()
 
         if (hasCameraRequirements()) {
             cameraFrameLayout.addView(cameraPreview)
@@ -117,16 +106,33 @@ class Camera2Fragment: AbstractChallengeFragment() {
     }
 
     override fun releaseCamera() {
-        stopBackgroundThread()
+        stopCameraDevice()
+        stopPreviewComponents()
     }
 
-    private fun stopBackgroundThread() {
-        backgroundThread.quitSafely()
-        try {
-            backgroundThread.join()
-        } catch (e: InterruptedException) {
-            e.printStackTrace()
-        }
+    private fun startCameraDevice(camera: CameraDevice) {
+        cameraDevice = camera
+        createCameraPreview()
+    }
+
+    private fun stopCameraDevice() {
+        cameraDevice?.close()
+        cameraDevice = null
+    }
+
+    private fun initPreviewComponents() {
+        reader = ImageReader.newInstance(IMAGE_WIDTH, IMAGE_HEIGHT, IMAGE_FORMAT, 1)
+        captureSurface = reader.surface
+    }
+
+    private fun stopPreviewComponents() {
+        cameraCaptureSession?.close()
+
+        reader.close()
+        captureSurface.release()
+
+        cameraPreview.surfaceTexture.release()
+        previewSurface?.release()
     }
 
     private fun createCameraPreview() {
@@ -199,10 +205,5 @@ class Camera2Fragment: AbstractChallengeFragment() {
         }
 
         return Size(IMAGE_WIDTH, IMAGE_HEIGHT)
-    }
-
-    init {
-        backgroundThread.start()
-        backgroundHandler = Handler(backgroundThread.looper)
     }
 }

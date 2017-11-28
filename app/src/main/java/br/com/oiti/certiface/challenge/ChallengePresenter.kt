@@ -3,7 +3,6 @@ package br.com.oiti.certiface.challenge
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Handler
-import android.os.HandlerThread
 import android.os.SystemClock
 import android.view.View
 import br.com.oiti.certiface.data.model.challenge.ChallengeDataResponse
@@ -12,32 +11,16 @@ import br.com.oiti.certiface.data.source.ChallengeRepository
 import java.io.ByteArrayOutputStream
 
 
-class ChallengePresenter(private val view: ChallengeContract.View, endpoint: String, appKey: String) {
+class ChallengePresenter(private val backgroundHandler: Handler, private val view: ChallengeContract.View, endpoint: String, appKey: String) {
 
-    private val backgroundThread = HandlerThread(this::javaClass.name)
-    private var backgroundHandler: Handler
-
-    private val repository = ChallengeRepository(endpoint, appKey)
+    private val repository = ChallengeRepository(backgroundHandler, endpoint, appKey)
 
     private val photos = HashMap<ByteArray, String>()
-
-
-    init {
-        backgroundThread.start()
-        backgroundHandler = Handler(backgroundThread.looper)
-    }
 
     fun start(params: String) {
         photos.clear()
         view.startChallenge()
         repository.challenge(params, { challengeResponse -> startChallenges(challengeResponse) })
-    }
-
-    fun destroy() {
-        repository.destroy()
-
-        backgroundHandler.removeCallbacksAndMessages(null)
-        photos.clear()
     }
 
     private fun startChallenges(apiResponse: ChallengeResponse) {

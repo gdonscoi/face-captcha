@@ -1,6 +1,5 @@
 package br.com.oiti.certiface.data.source.remote
 
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Environment
 import android.util.Base64
@@ -72,7 +71,7 @@ class ChallengeRemoteDataSource(baseUrl: String, private val appKey: String) {
         val stringImages = ArrayList<String>()
 
         for((key, value) in images) {
-            createImage(key)
+//            createImage(key)
             val imageBase64 = Base64.encodeToString(key, Base64.NO_WRAP)
 
             stringImages.add("data:image/jpeg;base64,type:$value,$imageBase64")
