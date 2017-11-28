@@ -61,6 +61,7 @@ class CameraFragment : AbstractChallengeFragment() {
     override fun releaseCamera() {
         camera?.release()
         camera = null
+
     }
 
     private fun openFrontFacingCamera(): Camera? {

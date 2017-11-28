@@ -127,12 +127,13 @@ class Camera2Fragment: AbstractChallengeFragment() {
 
     private fun stopPreviewComponents() {
         cameraCaptureSession?.close()
+        cameraCaptureSession = null
 
         reader.close()
         captureSurface.release()
 
-        cameraPreview.surfaceTexture.release()
         previewSurface?.release()
+        previewSurface = null
     }
 
     private fun createCameraPreview() {

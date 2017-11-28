@@ -124,16 +124,10 @@ class ChallengePresenter(private val backgroundHandler: Handler, private val vie
 
             if (captchaResponse.valid) {
                 messageAnimation = "Sucesso na autenticação"
-                backgroundHandler.post({
-                    Thread.sleep(2500)
-                    view.finishChallenge(captchaResponse.valid)
-                })
+                post({ view.finishChallenge(captchaResponse.valid) })
             } else {
                 messageAnimation = "Erro na autenticação"
-                backgroundHandler.post({
-                    Thread.sleep(2500)
-                    view.initialView()
-                })
+                post({ view.initialView() })
             }
 
             view.animationFeedback(View.VISIBLE, messageAnimation)
@@ -147,5 +141,11 @@ class ChallengePresenter(private val backgroundHandler: Handler, private val vie
         image.compress(Bitmap.CompressFormat.JPEG, 95, bos)
 
         return bos.toByteArray()
+    }
+
+    private fun post(action: () -> Unit) {
+        try {
+            backgroundHandler.post({ action() })
+        } catch (e: IllegalStateException){}
     }
 }

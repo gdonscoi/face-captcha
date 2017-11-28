@@ -69,9 +69,12 @@ abstract class AbstractChallengeFragment: Fragment(), ChallengeContract.View {
     override fun onPause() {
         super.onPause()
 
-        releaseCamera()
+        Thread({
+            stopBackgroundThread()
+            releaseCamera()
+        }).start()
+
         cameraFrameLayout.removeView(getCameraPreview())
-        stopBackgroundThread()
 
         presenter = null
     }
@@ -148,7 +151,11 @@ abstract class AbstractChallengeFragment: Fragment(), ChallengeContract.View {
     }
 
     private fun stopBackgroundThread() {
-        backgroundHandler?.removeCallbacksAndMessages(null)
+//        backgroundHandler?.removeCallbacksAndMessages(null)
+
+        backgroundHandler?.looper?.thread?.interrupt()
+        backgroundThread?.looper?.thread?.interrupt()
+        backgroundThread?.interrupt()
 
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
             backgroundThread?.quitSafely()
@@ -172,7 +179,7 @@ abstract class AbstractChallengeFragment: Fragment(), ChallengeContract.View {
     }
 
     private fun runOnUiThread(action: () -> Unit) {
-        activity.runOnUiThread(action)
+        activity?.runOnUiThread(action)
     }
 
     private fun visibilityChallengeContainer(visibility: Int) {
