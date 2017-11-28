@@ -64,6 +64,7 @@ class ChallengeRemoteDataSource(baseUrl: String, private val appKey: String) {
         val captchaResponse = response.body()
 
         return captchaResponse!!
+//        return CaptchaResponse(false, "", "", "")
     }
 
     private fun imagesToString(images: Map<ByteArray, String>): String {
@@ -92,15 +93,13 @@ class ChallengeRemoteDataSource(baseUrl: String, private val appKey: String) {
         }
 
         try {
-            Log.d(this::class.java.name, "Image created at " + photo.path)
+            Log.d(this::class.java.name, "Image created at " + photo.path + "(" + byteImage.size + " bytes)")
             val fos = FileOutputStream(photo.path)
 
             fos.write(byteImage)
             fos.close()
         } catch (e: java.io.IOException) {
-            Log.e(this::class.java.name, "Exception in photoCallback", e)
         }
-        Bitmap.Config.RGB_565
     }
 
 }

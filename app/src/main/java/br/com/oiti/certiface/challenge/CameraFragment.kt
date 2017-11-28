@@ -1,12 +1,11 @@
 package br.com.oiti.certiface.challenge
 
 import android.app.Activity
-import android.graphics.ImageFormat
 import android.hardware.Camera
-import android.view.Surface
 import android.view.View
 import br.com.oiti.certiface.challenge.camera.CameraPreview
 import kotlinx.android.synthetic.main.challenge_fragment.*
+
 
 /**
  * Uses old camera api
@@ -33,13 +32,11 @@ class CameraFragment : AbstractChallengeFragment() {
         }
     }
 
-    override fun buildTakePictureHandler(photos: HashMap<ByteArray, String>, afterTakePicture: (data: ByteArray) -> Unit): Any {
-        val callback = Camera.PictureCallback { data, camera ->
-            afterTakePicture(data)
-            camera.startPreview()
-        }
-
-        return callback
+    override fun buildTakePictureHandler(
+            photos: HashMap<ByteArray, String>,
+            afterTakePicture: (data: ByteArray) -> Unit): Any = Camera.PictureCallback { data, camera ->
+        afterTakePicture(data)
+        camera.startPreview()
     }
 
 
@@ -72,7 +69,7 @@ class CameraFragment : AbstractChallengeFragment() {
         getFrontFacingCameraId()?.let { camId ->
             Camera.open(camId.toInt()).let {
                 cam = it
-                setCameraDisplayOrientation(activity, camId.toInt(), it)
+                setCameraDisplayOrientation(activity, it)
                 setCameraParameters(it)
             }
         }
@@ -82,10 +79,10 @@ class CameraFragment : AbstractChallengeFragment() {
 
     private fun setCameraParameters(camera: Camera) {
         val parameters = camera.parameters
-        val lowerSupportedPictureSize = parameters.supportedPictureSizes.last()
+        val size = getBestSupportedImageSize(camera)
 
-        parameters.pictureFormat = ImageFormat.JPEG
-        parameters.setPictureSize(lowerSupportedPictureSize.width, lowerSupportedPictureSize.height)
+        parameters.pictureFormat = IMAGE_FORMAT
+        parameters.setPictureSize(size.width, size.height)
 
         camera.parameters = parameters
     }
@@ -93,25 +90,32 @@ class CameraFragment : AbstractChallengeFragment() {
     /**
      * @see Camera.setDisplayOrientation() comments
      */
-    private fun setCameraDisplayOrientation(activity: Activity, cameraId: Int, camera: android.hardware.Camera) {
+    private fun setCameraDisplayOrientation(activity: Activity, camera: android.hardware.Camera) {
+        val rotation = getRotation(activity)!!
 
-        val rotation = activity.windowManager.defaultDisplay.rotation
+        // set image orientation
+        val params = camera.parameters
+        params.setRotation(rotation)
+        camera.parameters = params
 
-        var degrees = 0
 
-        when (rotation) {
-            Surface.ROTATION_0 -> degrees = 0
-            Surface.ROTATION_90 -> degrees = 90
-            Surface.ROTATION_180 -> degrees = 180
-            Surface.ROTATION_270 -> degrees = 270
+        // set preview orientation
+        val result = (360 - rotation) % 360  // compensate the mirror
+        camera.setDisplayOrientation(result)
+    }
+
+    private fun getBestSupportedImageSize(camera: Camera): Camera.Size {
+        val parameters = camera.parameters
+        val pixelsCount = IMAGE_WIDTH * IMAGE_HEIGHT
+
+        parameters.supportedPictureSizes.forEach { size ->
+            val currentPixelsCount = size.width * size.height
+
+            if (currentPixelsCount < pixelsCount) {
+                return size
+            }
         }
 
-        val info = Camera.CameraInfo()
-        Camera.getCameraInfo(cameraId, info)
-
-        var result = (info.orientation + degrees) % 360
-        result = (360 - result) % 360  // compensate the mirror
-
-        camera.setDisplayOrientation(result)
+        return camera.Size(IMAGE_WIDTH, IMAGE_HEIGHT)
     }
 }
