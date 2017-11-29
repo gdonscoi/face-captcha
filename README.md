@@ -27,12 +27,19 @@ Certiface requires at minimum Java 7 and Android 4.0 (API 14)
 
 ## API usage
 
-Start the activity `br.com.oiti.certiface.challenge.ChallengeActivity.java` passing the three parameters below:
+* Include the folow dependecies in your `build.gradle`:
+```
+implementation "com.squareup.retrofit2:retrofit:2.3.0"
+implementation "com.squareup.retrofit2:converter-gson:2.3.0"
+implementation "org.bouncycastle:bcprov-jdk16:1.45"
+```
+
+* Start the activity `br.com.oiti.certiface.challenge.ChallengeActivity.java` passing the three parameters below:
 - `ChallengeActivity.PARAM_ENDPOINT`: Server endpoint
 - `ChallengeActivity.PARAM_APP_KEY`:  User application key
 - `ChallengeActivity.PARAM_USER_INFO`: User sensible data
 
-The activity will return:
+* The activity will return:
 - `Activity.RESULT_CANCELED`: When user cancel
 - `Activity.RESULT_OK`: When API validate with success
   - In this case, the activity will return with two extra parameters:
