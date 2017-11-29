@@ -52,7 +52,7 @@ class ChallengeActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissio
                 .commit()
     }
 
-    companion object Params {
+    companion object {
         val PARAM_APP_KEY = "app_key"
         val PARAM_ENDPOINT = "endpoint"
         val PARAM_USER_INFO = "user_info"

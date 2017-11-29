@@ -8,15 +8,20 @@ Certiface requires at minimum Java 7 and Android 4.0 (API 14)
 
 --
 
-## Import the library in Android Studio
+## Import the .AAR library in Android Studio
 
-`File > Project Structure > Dependencies Tab > Add module dependency (scope = compile)`
 
 1. Open your project in Android Studio
-2. Download the library
-3. Go to File > Project Structure > Dependencies Tab
-4. Click in the '+' button > jar dependency (scope = compile)
-4. Select the downloaded library
+1. Download the library
+1. Go to File > New > New Module
+1. Select "Import .JAR/.AAR Package" and click next
+1. Enter the path to .aar file and click finish
+1. Go to File > Project Structure > Dependencies Tab
+1. Under "Modules," in left menu, select the target module app
+1. Go to "Dependencies" tab
+1. Click in the '+' button
+1. Select module dependency
+1. Select the created module from the list
 
 --
 
@@ -27,16 +32,19 @@ Start the activity `br.com.oiti.certiface.challenge.ChallengeActivity.java` pass
 - `ChallengeActivity.PARAM_APP_KEY`:  User application key
 - `ChallengeActivity.PARAM_USER_INFO`: User sensible data
 
-The activity will result:
+The activity will return:
 - `Activity.RESULT_CANCELED`: When user cancel
 - `Activity.RESULT_OK`: When API validate with success
   - In this case, the activity will return with two extra parameters:
     - `ChallengeActivity.RESULT_HASH`: Hash used in server validation proccess
     - `ChallengeActivity.RESULT_PROTOCOL`: Protocol generated in server validation proccess 
 
---
+
+For more details, take a look at the `sample` dir.
+
 
 ## Dependecies
+
 Certiface uses retrofit, then if you're using ProGuard you might need to add the following options:
 
 ```
