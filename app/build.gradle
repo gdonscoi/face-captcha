@@ -25,6 +25,14 @@ android {
         abortOnError false
     }
 
+    libraryVariants.all { variant ->
+        variant.outputs.all { output ->
+            if (outputFile != null && outputFileName.endsWith('.aar')) {
+                outputFileName = "${archivesBaseName}-${defaultConfig.versionName}-${buildType.name}.aar"
+            }
+        }
+    }
+
 }
 
 dependencies {
@@ -33,7 +41,6 @@ dependencies {
     implementation"org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
 
     implementation "com.android.support:appcompat-v7:$android_support_version"
-    implementation "com.android.support.constraint:constraint-layout:$android_support_constraint_version"
 
     implementation "com.squareup.retrofit2:retrofit:$retrofit2_version"
     implementation "com.squareup.retrofit2:converter-gson:$retrofit2_version"
