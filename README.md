@@ -2,7 +2,7 @@
 
 ## Download
 
-Download [the latest JAR]
+Download [the latest AAR](#)
 
 Certiface requires at minimum Java 7 and Android 4.0 (API 14)
 
