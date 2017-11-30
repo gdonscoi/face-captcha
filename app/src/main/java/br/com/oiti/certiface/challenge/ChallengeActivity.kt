@@ -1,5 +1,6 @@
 package br.com.oiti.certiface.challenge
 
+import android.content.Intent
 import android.os.Bundle
 import android.support.v4.app.ActivityCompat
 import android.support.v4.app.Fragment
@@ -17,6 +18,15 @@ class ChallengeActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissio
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_challenge)
 
+        if(isInvalidBundleParams()){
+            val data = Intent()
+            data.putExtra(ChallengeActivity.PARAM_ACTIVITY_ERROR, getString(R.string.invalid_activity_params_error))
+            setResult(AppCompatActivity.RESULT_CANCELED, data)
+
+            finish()
+            return
+        }
+
         val fragment = getFragment()
         fragment.arguments = buildBundle()
 
@@ -26,6 +36,12 @@ class ChallengeActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissio
     override fun onBackPressed() {
         setResult(RESULT_CANCELED)
         super.onBackPressed()
+    }
+
+    private fun isInvalidBundleParams(): Boolean {
+        return endpoint.isNullOrBlank() ||
+                appKey.isNullOrBlank() ||
+                userParams.isNullOrBlank()
     }
 
     private fun getFragment(): AbstractChallengeFragment {
@@ -59,6 +75,7 @@ class ChallengeActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissio
         val PARAM_ACTIVITY_RESULT = "certiface_result"
         val PARAM_ACTIVITY_RESULT_HASH = "certiface_result_hash"
         val PARAM_ACTIVITY_RESULT_PROTOCOL = "certiface_result_protocol"
+        val PARAM_ACTIVITY_ERROR = "certiface_result_error"
     }
 
 }
