@@ -77,6 +77,7 @@ abstract class AbstractChallengeFragment: Fragment(), ChallengeContract.View {
 
         cameraFrameLayout.removeView(getCameraPreview())
 
+        presenter?.destroy()
         presenter = null
     }
 

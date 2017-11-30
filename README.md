@@ -40,11 +40,13 @@ implementation "org.bouncycastle:bcprov-jdk16:1.45"
   - `ChallengeActivity.PARAM_USER_INFO`: User sensible data
 
 - The activity will return:
-  - `Activity.RESULT_CANCELED`: When user cancel
+  - `Activity.RESULT_CANCELED`: When user cancel or an error occurred
+    - In this case, the activity will return extra parameters:
+      - `ChallengeActivity.PARAM_RESULT_ERROR`: Message of error
   - `Activity.RESULT_OK`: When API validate with success
     - In this case, the activity will return with two extra parameters:
-      - `ChallengeActivity.RESULT_HASH`: Hash used in server validation proccess
-      - `ChallengeActivity.RESULT_PROTOCOL`: Protocol generated in server validation proccess 
+      - `ChallengeActivity.PARAM_RESULT_HASH`: Hash used in server validation proccess
+      - `ChallengeActivity.PARAM_RESULT_PROTOCOL`: Protocol generated in server validation proccess 
 
 
 For more details, take a look at the `sample` dir.

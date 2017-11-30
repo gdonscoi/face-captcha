@@ -17,9 +17,9 @@ import java.io.FileOutputStream
 
 class ChallengeRemoteDataSource(baseUrl: String, private val appKey: String) {
 
-    private val api: ChallengeApi
-    private val gson = Gson()
-    private val cryptoData = CryptoData(appKey)
+    private var api: ChallengeApi?
+    private var gson: Gson? = Gson()
+    private var cryptoData: CryptoData? = CryptoData(appKey)
 
     init {
         val retrofit = Retrofit.Builder()
@@ -30,16 +30,15 @@ class ChallengeRemoteDataSource(baseUrl: String, private val appKey: String) {
         api = retrofit.create(ChallengeApi::class.java)
     }
 
-    fun challenge(params: String): ChallengeResponse {
+    fun challenge(params: String): ChallengeResponse? {
+        val call = api?.challenge(appKey, cryptoData!!.encrypt(params))
+        val response = call?.execute()
+        val encrypted = response?.body()
+        val json = cryptoData?.decrypt(encrypted!!)
 
-        val call = api.challenge(appKey, cryptoData.encrypt(params))
-        val response = call.execute()
-        val encrypted = response.body()
-        val json = cryptoData.decrypt(encrypted!!)
+        val challengeResponse = gson?.fromJson(json, ChallengeResponse::class.java)
 
-        val challengeResponse = gson.fromJson(json, ChallengeResponse::class.java)
-
-        challengeResponse.challenges.map {
+        challengeResponse?.challenges?.map {
             val decodedMessage = Base64.decode(it.mensagem, Base64.DEFAULT)
             it.decodedMessage = BitmapFactory.decodeByteArray(decodedMessage, 0, decodedMessage.size)
 
@@ -56,21 +55,27 @@ class ChallengeRemoteDataSource(baseUrl: String, private val appKey: String) {
      */
     fun captcha(chKey: String, images: Map<ByteArray, String>): CaptchaResponse {
         val stringImages = imagesToString(images)
-        val encryptedImages = cryptoData.encrypt(stringImages)
+        val encryptedImages = cryptoData?.encrypt(stringImages)
 
-        val call = api.captcha(appKey, chKey, encryptedImages)
-        val response = call.execute()
-        val captchaResponse = response.body()
+        val call = api?.captcha(appKey, chKey, encryptedImages!!)
+        val response = call?.execute()
+        val captchaResponse = response?.body()
 
         return captchaResponse!!
 //        return CaptchaResponse(false, "", "", "")
+    }
+
+    fun destroy() {
+        api = null
+        gson = null
+        cryptoData = null
     }
 
     private fun imagesToString(images: Map<ByteArray, String>): String {
 
         val stringImages = ArrayList<String>()
 
-        for((key, value) in images) {
+        for ((key, value) in images) {
 //            createImage(key)
             val imageBase64 = Base64.encodeToString(key, Base64.NO_WRAP)
 
