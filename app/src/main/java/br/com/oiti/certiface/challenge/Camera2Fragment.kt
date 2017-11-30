@@ -25,7 +25,7 @@ import java.util.*
  * @see <a href="https://www.youtube.com/watch?v=Xtp3tH27OFs" />
  */
 @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-class Camera2Fragment: AbstractChallengeFragment() {
+class Camera2Fragment : AbstractChallengeFragment() {
 
     private val cameraPreview by lazy { TextureView(activity) }
     private val cameraManager by lazy { activity.getSystemService(Context.CAMERA_SERVICE) as CameraManager }
@@ -46,7 +46,7 @@ class Camera2Fragment: AbstractChallengeFragment() {
     private val stateCallback = CameraDeviceStateCallback(
             { startCameraDevice(it!!) },
             { stopCameraDevice() },
-            {_, _ -> stopCameraDevice() })
+            { _, _ -> stopCameraDevice() })
 
 
     override fun getCameraPreview(): View? = cameraPreview
@@ -59,17 +59,8 @@ class Camera2Fragment: AbstractChallengeFragment() {
 
     override fun onResume() {
         super.onResume()
-        initPreviewComponents()
 
-        if (hasCameraRequirements()) {
-            cameraFrameLayout.addView(cameraPreview)
-
-            if (cameraPreview.isAvailable) {
-                openFrontFacingCamera()
-            } else {
-                cameraPreview.surfaceTextureListener = textureListener
-            }
-        }
+        makePreviewCamera()
     }
 
     override fun buildTakePictureHandler(
@@ -146,7 +137,31 @@ class Camera2Fragment: AbstractChallengeFragment() {
             }
         })
 
-        cameraDevice!!.createCaptureSession(Arrays.asList(previewSurface, captureSurface), cameraCaptureSessionStateCallback, null)
+        // eu fiz isso aki pq parece que resolve no meu cel, dá uma olhada no seu se muda algo, provavel que não pq soh modifiquei o quando entra no catch
+        try {
+            cameraDevice!!.createCaptureSession(Arrays.asList(previewSurface, captureSurface), cameraCaptureSessionStateCallback, null)
+        } catch (e: Exception) {
+            makePreviewCamera()
+        }
+    }
+
+    private fun makePreviewCamera() {
+        initPreviewComponents()
+
+        if (hasCameraRequirements()) {
+            addCameraPreviewView()
+
+            if (cameraPreview.isAvailable) {
+                openFrontFacingCamera()
+            } else {
+                cameraPreview.surfaceTextureListener = textureListener
+            }
+        }
+    }
+
+    private fun addCameraPreviewView() {
+        if (cameraFrameLayout.childCount == 0)
+            cameraFrameLayout.addView(cameraPreview)
     }
 
     private fun setupHandlers() {
