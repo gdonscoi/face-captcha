@@ -39,7 +39,7 @@ class MainActivity : AppCompatActivity() {
 
         if (requestCode == 1) {
             if (requestCode == RESULT_OK) {
-                val result = data?.getBooleanExtra(ChallengeActivity.PARAM_ACTIVITY_RESULT, false)
+                val result = data?.getBooleanExtra(ChallengeActivity.PARAM_RESULT, false)
                 Toast.makeText(MainActivity@ this, "Sucesso: $result", Toast.LENGTH_LONG).show()
             }
 

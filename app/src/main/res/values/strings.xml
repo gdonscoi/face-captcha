@@ -2,4 +2,5 @@
     <string name="app_name">Certiface</string>
     <string name="start">iniciar</string>
     <string name="version">faceCAPTCHA 2.71025020</string>
+    <string name="invalid_activity_params_error">Certiface activity params cannot be null or empty</string>
 </resources>

@@ -20,6 +20,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import br.com.oiti.certiface.R
+import br.com.oiti.certiface.data.model.challenge.CaptchaResponse
 import kotlinx.android.synthetic.main.challenge_fragment.*
 import kotlinx.android.synthetic.main.challenge_view.*
 import kotlinx.android.synthetic.main.feedback_animation.*
@@ -142,10 +143,12 @@ abstract class AbstractChallengeFragment: Fragment(), ChallengeContract.View {
         }
     }
 
-    override fun finishChallenge(valid: Boolean) {
+    override fun finishChallenge(response: CaptchaResponse) {
         val data = Intent()
 
-        data.putExtra(ChallengeActivity.PARAM_ACTIVITY_RESULT, valid)
+        data.putExtra(ChallengeActivity.PARAM_RESULT, response.valid)
+        data.putExtra(ChallengeActivity.PARAM_RESULT_HASH, response.hash)
+        data.putExtra(ChallengeActivity.PARAM_RESULT_PROTOCOL, response.protocol)
 
         activity.setResult(AppCompatActivity.RESULT_OK, data)
         activity.finish()
