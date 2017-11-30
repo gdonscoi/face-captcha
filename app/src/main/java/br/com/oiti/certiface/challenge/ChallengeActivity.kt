@@ -57,6 +57,8 @@ class ChallengeActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissio
         val PARAM_ENDPOINT = "endpoint"
         val PARAM_USER_INFO = "user_info"
         val PARAM_ACTIVITY_RESULT = "certiface_result"
+        val PARAM_ACTIVITY_RESULT_HASH = "certiface_result_hash"
+        val PARAM_ACTIVITY_RESULT_PROTOCOL = "certiface_result_protocol"
     }
 
 }

@@ -125,7 +125,7 @@ class ChallengePresenter(private val backgroundHandler: Handler, private val vie
 
             if (captchaResponse.valid) {
                 messageAnimation = "Sucesso na autenticação"
-                postDelayed({ view.finishChallenge(captchaResponse.valid) })
+                postDelayed({ view.finishChallenge(captchaResponse) })
             } else {
                 messageAnimation = "Erro na autenticação"
                 postDelayed({ view.initialView() })

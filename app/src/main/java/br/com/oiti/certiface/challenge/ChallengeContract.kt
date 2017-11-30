@@ -1,6 +1,7 @@
 package br.com.oiti.certiface.challenge
 
 import android.graphics.Bitmap
+import br.com.oiti.certiface.data.model.challenge.CaptchaResponse
 
 
 interface ChallengeContract {
@@ -24,6 +25,6 @@ interface ChallengeContract {
 
         fun animationFeedback(visibility: Int, message: String)
 
-        fun finishChallenge(valid: Boolean)
+        fun finishChallenge(response: CaptchaResponse)
     }
 }
