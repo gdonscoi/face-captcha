@@ -10,6 +10,7 @@ import android.graphics.ImageFormat
 import android.os.Bundle
 import android.os.Handler
 import android.os.HandlerThread
+import android.support.design.widget.Snackbar
 import android.support.v4.app.ActivityCompat
 import android.support.v4.app.Fragment
 import android.support.v7.app.AppCompatActivity
@@ -21,6 +22,8 @@ import android.view.ViewGroup
 import android.widget.Toast
 import br.com.oiti.certiface.R
 import br.com.oiti.certiface.data.model.challenge.CaptchaResponse
+import br.com.oiti.certiface.data.util.action
+import br.com.oiti.certiface.data.util.snack
 import kotlinx.android.synthetic.main.challenge_fragment.*
 import kotlinx.android.synthetic.main.challenge_view.*
 import kotlinx.android.synthetic.main.feedback_animation.*
@@ -29,7 +32,7 @@ import kotlinx.android.synthetic.main.loading_view.*
 import kotlinx.android.synthetic.main.result_view.*
 
 
-abstract class AbstractChallengeFragment: Fragment(), ChallengeContract.View {
+abstract class AbstractChallengeFragment : Fragment(), ChallengeContract.View {
 
     protected var backgroundHandler: Handler? = null
     private var backgroundThread: HandlerThread? = null
@@ -64,7 +67,10 @@ abstract class AbstractChallengeFragment: Fragment(), ChallengeContract.View {
         startBackgroundThread()
 
         presenter = ChallengePresenter(backgroundHandler!!, this@AbstractChallengeFragment, endpoint, appKey)
-        initialView()
+
+        if (hasCameraPermissions()) {
+            initialView()
+        }
     }
 
     override fun onPause() {
@@ -83,10 +89,10 @@ abstract class AbstractChallengeFragment: Fragment(), ChallengeContract.View {
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         if (requestCode == REQUEST_CAMERA_PERMISSION) {
-            if (grantResults[0] == PackageManager.PERMISSION_DENIED) {
-                // close the app
-                printToast("Sorry!!!, you can't use this app without granting permission")
-                activity.finish()
+            when (grantResults[0]) {
+                PackageManager.PERMISSION_GRANTED -> initialView()
+
+                PackageManager.PERMISSION_DENIED -> finishPermissionDenied()
             }
         }
     }
@@ -151,6 +157,15 @@ abstract class AbstractChallengeFragment: Fragment(), ChallengeContract.View {
         data.putExtra(ChallengeActivity.PARAM_RESULT_PROTOCOL, response.protocol)
 
         activity.setResult(AppCompatActivity.RESULT_OK, data)
+        activity.finish()
+    }
+
+    private fun finishPermissionDenied() {
+        val data = Intent()
+
+        data.putExtra(ChallengeActivity.PARAM_RESULT_ERROR, "Sorry!!!, you can't use this app without granting permission")
+
+        activity.setResult(AppCompatActivity.RESULT_CANCELED, data)
         activity.finish()
     }
 
@@ -240,7 +255,11 @@ abstract class AbstractChallengeFragment: Fragment(), ChallengeContract.View {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M &&
                 ActivityCompat.checkSelfPermission(activity, Manifest.permission.CAMERA)
                         != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(activity, arrayOf(Manifest.permission.CAMERA), REQUEST_CAMERA_PERMISSION)
+
+            cameraFrameLayout.snack("This permission is essential for the feature, you cannot use the application if you deny the permission", Snackbar.LENGTH_INDEFINITE) {
+                action("Show") { ActivityCompat.requestPermissions(activity, arrayOf(Manifest.permission.CAMERA), REQUEST_CAMERA_PERMISSION) }
+            }
+
             return false
         }
 
