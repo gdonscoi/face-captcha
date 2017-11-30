@@ -14,7 +14,7 @@
         android:layout_marginTop="15dp"
         android:background="#fff" />
 
-    <include layout="@layout/feedback_animation"/>
+    <include layout="@layout/feedback_animation" />
 
     <ImageView
         android:id="@+id/iconField"
@@ -30,13 +30,15 @@
         android:layout_height="100dp"
         android:layout_above="@id/text_version">
 
-        <include layout="@layout/initial_view"/>
+        <include
+            layout="@layout/initial_view"
+            android:visibility="gone" />
 
-        <include layout="@layout/challenge_view"/>
+        <include layout="@layout/challenge_view" />
 
-        <include layout="@layout/loading_view"/>
+        <include layout="@layout/loading_view" />
 
-        <include layout="@layout/result_view"/>
+        <include layout="@layout/result_view" />
 
     </RelativeLayout>
 
@@ -44,9 +46,9 @@
         android:id="@+id/text_version"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textColor="#fff"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
         android:text="@string/version"
         android:textAppearance="@style/TextAppearance.AppCompat.Small"
-        android:layout_centerHorizontal="true"
-        android:layout_alignParentBottom="true"/>
+        android:textColor="#fff" />
 </RelativeLayout>
