@@ -145,9 +145,9 @@ abstract class AbstractChallengeFragment: Fragment(), ChallengeContract.View {
     override fun finishChallenge(response: CaptchaResponse) {
         val data = Intent()
 
-        data.putExtra(ChallengeActivity.PARAM_ACTIVITY_RESULT, response.valid)
-        data.putExtra(ChallengeActivity.PARAM_ACTIVITY_RESULT_HASH, response.hash)
-        data.putExtra(ChallengeActivity.PARAM_ACTIVITY_RESULT_PROTOCOL, response.protocol)
+        data.putExtra(ChallengeActivity.PARAM_RESULT, response.valid)
+        data.putExtra(ChallengeActivity.PARAM_RESULT_HASH, response.hash)
+        data.putExtra(ChallengeActivity.PARAM_RESULT_PROTOCOL, response.protocol)
 
         activity.setResult(AppCompatActivity.RESULT_OK, data)
         activity.finish()
